@@ -13,293 +13,118 @@
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      padding: 16px;
+      padding: 24px;
     }
 
-    /* ===== PULSANTE CHIUDI - FIXED, FUORI DA TUTTO ===== */
+    /* Pulsante CHIUDI fisso */
     #btn-close {
       position: fixed;
-      top: 20px;
-      right: 20px;
-      width: 56px;
-      height: 56px;
+      top: 20px; right: 20px;
+      width: 56px; height: 56px;
       border-radius: 50%;
       background: #E8001B;
       border: 3px solid white;
-      font-size: 28px;
-      font-weight: 700;
-      line-height: 1;
+      font-size: 26px; font-weight: 700; line-height: 1;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       color: white;
       z-index: 9999;
-      box-shadow: 0 4px 16px rgba(232,0,27,0.5);
-      pointer-events: auto;
+      box-shadow: 0 4px 20px rgba(232,0,27,0.55);
     }
-    #btn-close:active { background: #b0001a; transform: scale(0.93); }
+    #btn-close:active { transform: scale(0.9); }
 
-    /* ===== CARD ===== */
     .card {
       background: white;
-      border-radius: 20px;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.4);
-      width: 100%;
-      max-width: 680px;
-      /* NO overflow:hidden - impedisce click su RoomOS */
-      position: relative;
+      border-radius: 24px;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.5);
+      width: 100%; max-width: 640px;
+      padding: 48px 44px 44px;
+      text-align: center;
     }
-    .inner { padding: 36px 36px 32px; }
 
-    .step { display: none; flex-direction: column; }
-    .step.active { display: flex; }
+    .icon { font-size: 72px; margin-bottom: 20px; }
+    h1 { font-size: 26px; font-weight: 700; color: #1a1a1a; margin-bottom: 10px; }
+    .sub { font-size: 16px; color: #666; margin-bottom: 32px; line-height: 1.5; }
 
-    h2 { font-size: 22px; font-weight: 700; color: #1a1a1a; margin-bottom: 4px; }
-    .subtitle { font-size: 14px; color: #888; margin-bottom: 24px; }
-
-    /* ===== INPUT - area touch grande ===== */
-    .field-row { margin-bottom: 18px; }
-    label {
-      display: block; font-size: 12px; font-weight: 700; color: #666;
-      text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px;
-    }
-    input[type=text], textarea {
-      display: block;
-      width: 100%;
-      min-height: 56px;
-      padding: 16px 18px;
-      border: 2px solid #ddd;
+    .detail-row {
+      background: #f7f9fc;
       border-radius: 12px;
-      font-size: 17px;
-      color: #1a1a1a;
-      background: #fafafa;
-      outline: none;
-      -webkit-appearance: none;
-      appearance: none;
-      cursor: text;
-      /* Forza il WebEngine a trattarlo come tappable */
-      pointer-events: auto;
-      -webkit-user-select: text;
-      user-select: text;
-    }
-    input[type=text]:focus, textarea:focus {
-      border-color: #049FD9;
-      background: white;
-    }
-    textarea { resize: none; height: 100px; font-family: inherit; }
-
-    /* Hint "tocca per scrivere" */
-    .tap-hint {
-      font-size: 11px; color: #bbb; margin-top: 5px;
-      display: flex; align-items: center; gap: 4px;
-    }
-
-    /* ===== CATEGORIE ===== */
-    .cats { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-    .cat-btn {
       padding: 16px 20px;
-      border: 2px solid #e0e0e0;
-      border-radius: 50px;
-      background: white;
-      font-size: 16px;
-      color: #1a1a1a;
-      cursor: pointer;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
       text-align: left;
-      pointer-events: auto;
     }
-    .cat-btn:active { border-color: #049FD9; background: #e6f6fd; }
-    .cat-btn.selected { border-color: #049FD9; background: #e6f6fd; font-weight: 700; }
+    .detail-label { font-size: 12px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: .05em; min-width: 80px; }
+    .detail-value { font-size: 15px; color: #222; font-weight: 600; }
 
-    /* ===== BADGE ===== */
-    .badge {
-      display: inline-block;
-      background: #e6f6fd; color: #049FD9;
-      border-radius: 50px; padding: 5px 16px;
-      font-size: 13px; font-weight: 700; margin-bottom: 16px;
-    }
-
-    /* ===== BOTTONI ===== */
-    .btn-primary {
-      width: 100%; padding: 16px;
-      background: #049FD9; color: white;
-      border: none; border-radius: 12px;
-      font-size: 17px; font-weight: 700;
-      cursor: pointer; pointer-events: auto;
-    }
-    .btn-primary:active { background: #0270a0; }
-    .btn-primary:disabled { background: #a0d4ec; cursor: not-allowed; }
-
-    .btn-back {
-      background: none; border: none; color: #aaa;
-      font-size: 13px; cursor: pointer; margin-top: 14px;
-      text-decoration: underline; text-align: center;
-      pointer-events: auto;
-    }
-
-    /* ===== SPINNER ===== */
-    .spinner-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 40px 0; }
-    .spinner {
-      width: 52px; height: 52px;
-      border: 5px solid #e0e0e0;
-      border-top-color: #049FD9;
-      border-radius: 50%;
-      animation: spin .8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ===== SUCCESSO ===== */
-    .success-wrap { align-items: center; text-align: center; padding: 16px 0 8px; }
-    .success-icon { font-size: 60px; margin-bottom: 16px; }
-    .success-title { font-size: 22px; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; }
-    .success-sub { color: #666; font-size: 15px; margin-bottom: 24px; }
-    .countdown-text { font-size: 13px; color: #aaa; }
-    .bar-wrap { width: 100%; height: 5px; background: #eee; border-radius: 4px; margin-top: 14px; }
+    .bar-wrap { width: 100%; height: 5px; background: #eee; border-radius: 4px; margin-top: 28px; }
     .bar { height: 5px; background: #049FD9; border-radius: 4px; width: 100%; transition: width 1s linear; }
+    .countdown-text { font-size: 13px; color: #aaa; margin-top: 10px; }
 
-    /* ===== ERRORE ===== */
-    .err-box {
-      background: #fff0f0; border: 1px solid #ffcccc;
-      color: #cc0000; border-radius: 10px;
-      padding: 14px 16px; font-size: 14px; margin-bottom: 16px;
-    }
+    /* Schermata errore */
+    .err-icon { font-size: 64px; margin-bottom: 16px; }
+    .err-title { font-size: 22px; font-weight: 700; color: #E8001B; margin-bottom: 8px; }
+    .err-sub { font-size: 15px; color: #666; }
   </style>
 </head>
 <body>
 
-  <!-- Pulsante CHIUDI fisso, sopra tutto, fuori dalla card -->
-  <button id="btn-close" onclick="closePage()" title="Chiudi pagina">&#x2715;</button>
+  <button id="btn-close" onclick="closePage()" title="Chiudi">&#x2715;</button>
 
-  <div class="card">
-    <div class="inner">
+  <div class="card" id="card-success">
+    <div class="icon">&#x2705;</div>
+    <h1>Segnalazione inviata!</h1>
+    <div class="sub">Grazie <strong id="thank-name"></strong>, il tuo problema e stato registrato.<br>Provvederemo al piu presto.</div>
 
-      <!-- Step 1: Nome -->
-      <div id="s-name" class="step active">
-        <h2>Chi sei?</h2>
-        <p class="subtitle">Inserisci il tuo nome per la segnalazione</p>
-        <div class="field-row">
-          <label>Nome e Cognome</label>
-          <input type="text" id="inp-name" placeholder="Es. Mario Rossi" autocomplete="off">
-          <div class="tap-hint">&#x1F446; Tocca il campo per scrivere</div>
-        </div>
-        <button class="btn-primary" onclick="goToCategory()">Continua &rarr;</button>
-      </div>
-
-      <!-- Step 2: Categoria -->
-      <div id="s-category" class="step">
-        <h2>Cosa non va?</h2>
-        <p class="subtitle">Seleziona la categoria del problema</p>
-        <div class="cats">
-          <button class="cat-btn" onclick="selectCategory(this,'Audio / Video')">&#x1F50A;&nbsp; Audio / Video</button>
-          <button class="cat-btn" onclick="selectCategory(this,'Qualcosa nella sala')">&#x1F4CB;&nbsp; Qualcosa nella sala</button>
-          <button class="cat-btn" onclick="selectCategory(this,'Rete / Connettivita')">&#x1F4F6;&nbsp; Rete / Connettivita</button>
-          <button class="cat-btn" onclick="selectCategory(this,'Altro')">&#x2753;&nbsp; Altro</button>
-        </div>
-        <button class="btn-back" onclick="show('s-name')">&larr; Torna indietro</button>
-      </div>
-
-      <!-- Step 3: Dettagli -->
-      <div id="s-details" class="step">
-        <div class="badge" id="badge-cat"></div>
-        <h2>Dettagli aggiuntivi</h2>
-        <p class="subtitle">Opzionale &mdash; aggiungi informazioni utili</p>
-        <div class="field-row">
-          <label>Descrizione</label>
-          <textarea id="inp-details" placeholder="Es. Il microfono non funziona durante le chiamate..."></textarea>
-          <div class="tap-hint">&#x1F446; Tocca il campo per scrivere</div>
-        </div>
-        <button class="btn-primary" onclick="sendReport()">&#x2709;&nbsp; Invia Segnalazione</button>
-        <button class="btn-back" onclick="show('s-category')">&larr; Torna indietro</button>
-      </div>
-
-      <!-- Invio -->
-      <div id="s-sending" class="step">
-        <div class="spinner-wrap">
-          <div class="spinner"></div>
-          <div style="font-size:16px;font-weight:600;color:#333;">Invio in corso...</div>
-        </div>
-      </div>
-
-      <!-- Successo -->
-      <div id="s-success" class="step success-wrap">
-        <div class="success-icon">&#x2705;</div>
-        <div class="success-title">Segnalazione inviata!</div>
-        <div class="success-sub">Grazie <strong id="thank-name"></strong>, provvederemo al piu presto.</div>
-        <div class="countdown-text">Chiusura automatica tra <strong id="cd">6</strong> secondi</div>
-        <div class="bar-wrap"><div class="bar" id="bar"></div></div>
-      </div>
-
-      <!-- Errore -->
-      <div id="s-error" class="step">
-        <div class="err-box">&#x26A0;&nbsp; Errore durante l'invio.<br><small id="err-detail"></small></div>
-        <button class="btn-primary" onclick="sendReport()">Riprova</button>
-        <button class="btn-back" onclick="show('s-details')">&larr; Torna ai dettagli</button>
-      </div>
-
+    <div class="detail-row">
+      <span class="detail-label">Sala</span>
+      <span class="detail-value" id="d-room"></span>
     </div>
+    <div class="detail-row">
+      <span class="detail-label">Categoria</span>
+      <span class="detail-value" id="d-cat"></span>
+    </div>
+    <div class="detail-row" id="row-details" style="display:none">
+      <span class="detail-label">Dettagli</span>
+      <span class="detail-value" id="d-details"></span>
+    </div>
+
+    <div class="bar-wrap"><div class="bar" id="bar"></div></div>
+    <div class="countdown-text">Chiusura automatica tra <strong id="cd">7</strong> secondi</div>
+  </div>
+
+  <div class="card" id="card-error" style="display:none">
+    <div class="err-icon">&#x274C;</div>
+    <div class="err-title">Qualcosa e andato storto</div>
+    <div class="err-sub">Non e stato possibile inviare la segnalazione.<br>Riprova o contatta l'IT direttamente.</div>
   </div>
 
 <script>
-  var params  = new URLSearchParams(location.search);
-  var ROOM    = params.get('room')    || 'Sala sconosciuta';
-  var WEBHOOK = params.get('webhook') || '';
-  var state   = { name: '', category: '' };
+  var p    = new URLSearchParams(location.search);
+  var name = p.get('name')     || '';
+  var room = p.get('room')     || 'N/D';
+  var cat  = p.get('category') || 'N/D';
+  var det  = p.get('details')  || '';
+  var ok   = p.get('status')   === 'ok';
 
-  function show(id) {
-    document.querySelectorAll('.step').forEach(function(s){ s.classList.remove('active'); });
-    document.getElementById(id).classList.add('active');
-  }
-
-  function goToCategory() {
-    var val = document.getElementById('inp-name').value.trim();
-    if (!val) {
-      var inp = document.getElementById('inp-name');
-      inp.style.borderColor = '#E8001B';
-      setTimeout(function(){ inp.style.borderColor = ''; }, 1500);
-      return;
+  if (!ok) {
+    document.getElementById('card-success').style.display = 'none';
+    document.getElementById('card-error').style.display   = 'block';
+  } else {
+    document.getElementById('thank-name').textContent = name || 'utente';
+    document.getElementById('d-room').textContent     = room;
+    document.getElementById('d-cat').textContent      = cat;
+    if (det) {
+      document.getElementById('d-details').textContent        = det;
+      document.getElementById('row-details').style.display    = 'flex';
     }
-    state.name = val;
-    show('s-category');
-  }
-
-  function selectCategory(btn, cat) {
-    document.querySelectorAll('.cat-btn').forEach(function(b){ b.classList.remove('selected'); });
-    btn.classList.add('selected');
-    state.category = cat;
-    document.getElementById('badge-cat').textContent = cat;
-    setTimeout(function(){ show('s-details'); }, 180);
-  }
-
-  async function sendReport() {
-    show('s-sending');
-    var details = document.getElementById('inp-details').value.trim();
-    var now = new Date().toLocaleString('it-IT', { timeZone: 'Europe/Rome' });
-    var md =
-      '## Nuova Segnalazione\n\n' +
-      '| Campo | Valore |\n|-------|--------|\n' +
-      '| **Da** | ' + state.name + ' |\n' +
-      '| **Sala** | ' + ROOM + ' |\n' +
-      '| **Categoria** | ' + state.category + ' |\n' +
-      '| **Dettagli** | ' + (details || 'Nessun dettaglio') + ' |\n' +
-      '| **Quando** | ' + now + ' |';
-    try {
-      var res = await fetch(WEBHOOK, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ markdown: md }),
-      });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      document.getElementById('thank-name').textContent = state.name;
-      show('s-success');
-      startCountdown();
-    } catch(e) {
-      document.getElementById('err-detail').textContent = e.message;
-      show('s-error');
-    }
+    startCountdown();
   }
 
   function startCountdown() {
-    var sec = 6;
+    var sec = 7;
     var cd  = document.getElementById('cd');
     var bar = document.getElementById('bar');
     requestAnimationFrame(function(){ bar.style.width = '0%'; });
@@ -313,10 +138,6 @@
   function closePage() {
     try { window.close(); } catch(e) {}
   }
-
-  document.getElementById('inp-name').addEventListener('keydown', function(e){
-    if (e.key === 'Enter') { e.preventDefault(); goToCategory(); }
-  });
 </script>
 </body>
 </html>
