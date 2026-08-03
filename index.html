@@ -6,7 +6,6 @@
   <title>Segnala Problema</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: 'CiscoSansTT', 'Helvetica Neue', Arial, sans-serif;
       background: #f4f4f4;
@@ -15,149 +14,63 @@
       justify-content: center;
       min-height: 100vh;
     }
-
     .card {
       background: white;
       border-radius: 16px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.12);
       width: 90%;
-      max-width: 700px;
-      display: flex;
+      max-width: 680px;
       overflow: hidden;
-      min-height: 480px;
       position: relative;
-    }
-
-    /* Pulsante chiudi */
-    .btn-close {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      border: none;
-      background: #f0f0f0;
-      color: #666;
-      font-size: 18px;
-      cursor: pointer;
       display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background .2s, color .2s;
-      z-index: 10;
-      line-height: 1;
     }
-    .btn-close:hover { background: #ffdddd; color: #cc0000; }
-
     .left {
-      background: white;
-      width: 240px;
+      width: 220px;
       flex-shrink: 0;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 32px;
       border-right: 1px solid #ebebeb;
+      background: white;
     }
-
-    .left img {
-      max-width: 160px;
-      max-height: 120px;
-      object-fit: contain;
-      mix-blend-mode: multiply;
-    }
-
+    .left img { max-width: 140px; max-height: 100px; object-fit: contain; mix-blend-mode: multiply; }
     .right {
       flex: 1;
-      padding: 48px 40px;
+      padding: 48px 36px;
       display: flex;
       flex-direction: column;
       justify-content: center;
     }
+    .step { display: none; }
+    .step.active { display: flex; flex-direction: column; }
 
-    h2 { font-size: 24px; font-weight: 700; color: #1a1a1a; margin-bottom: 28px; }
-
-    .btn-category {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      width: 100%;
-      padding: 14px 20px;
-      margin-bottom: 12px;
-      border: 1.5px solid #d8d8d8;
-      border-radius: 50px;
-      background: white;
-      font-size: 16px;
-      color: #1a1a1a;
-      cursor: pointer;
-      transition: border-color .2s, background .2s;
+    /* --- Stato invio in corso --- */
+    .spinner-wrap { align-items: center; gap: 20px; }
+    .spinner {
+      width: 52px; height: 52px;
+      border: 5px solid #e0e0e0;
+      border-top-color: #049FD9;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
     }
-    .btn-category:hover { border-color: #049FD9; background: #f0faff; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .sending-title { font-size: 20px; font-weight: 700; color: #1a1a1a; }
+    .sending-sub { font-size: 14px; color: #888; margin-top: 6px; }
 
-    .form-group { margin-bottom: 20px; }
-    label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
-
-    .input-fake {
-      width: 100%;
-      padding: 12px 16px;
-      border: 1.5px solid #d8d8d8;
-      border-radius: 10px;
+    /* --- Riepilogo --- */
+    .recap-title { font-size: 22px; font-weight: 700; color: #1a1a1a; margin-bottom: 20px; }
+    .recap-row {
+      display: flex;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #f0f0f0;
       font-size: 15px;
-      color: #1a1a1a;
-      background: white;
-      cursor: pointer;
-      min-height: 48px;
-      display: flex;
-      align-items: center;
-      transition: border-color .2s;
-      user-select: none;
     }
-    .input-fake:hover { border-color: #049FD9; }
-    .input-fake.active { border-color: #049FD9; }
-    .input-fake.placeholder { color: #aaa; }
-
-    .input-fake-multiline {
-      width: 100%;
-      padding: 12px 16px;
-      border: 1.5px solid #d8d8d8;
-      border-radius: 10px;
-      font-size: 15px;
-      color: #1a1a1a;
-      background: white;
-      cursor: pointer;
-      min-height: 96px;
-      display: flex;
-      align-items: flex-start;
-      transition: border-color .2s;
-      user-select: none;
-    }
-    .input-fake-multiline:hover { border-color: #049FD9; }
-    .input-fake-multiline.placeholder { color: #aaa; }
-
-    .keyboard-hint {
-      font-size: 11px;
-      color: #bbb;
-      margin-top: 4px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .category-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: #e8f6fd;
-      color: #049FD9;
-      border-radius: 50px;
-      padding: 6px 14px;
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 20px;
-    }
-
+    .recap-label { color: #888; width: 110px; flex-shrink: 0; font-size: 13px; }
+    .recap-value { color: #1a1a1a; font-weight: 600; }
     .btn-submit {
+      margin-top: 24px;
       width: 100%;
       padding: 14px;
       background: #049FD9;
@@ -167,289 +80,146 @@
       font-size: 16px;
       font-weight: 700;
       cursor: pointer;
-      transition: background .2s;
-      margin-top: 4px;
     }
     .btn-submit:hover { background: #0381b0; }
-    .btn-submit:disabled { background: #a0d4ec; cursor: not-allowed; }
 
-    .btn-back {
-      background: none;
-      border: none;
-      color: #888;
-      font-size: 13px;
-      cursor: pointer;
-      margin-top: 12px;
-      text-decoration: underline;
-      padding: 0;
-    }
-
+    /* --- Successo --- */
+    .success-wrap { align-items: center; text-align: center; }
     .success-icon { font-size: 56px; margin-bottom: 16px; }
     .success-title { font-size: 22px; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; }
-    .success-sub { color: #666; font-size: 15px; margin-bottom: 24px; }
+    .success-sub { color: #666; font-size: 15px; margin-bottom: 20px; }
+    .countdown-text { font-size: 13px; color: #aaa; }
+    .countdown-bar-wrap { width: 100%; height: 4px; background: #eee; border-radius: 2px; margin-top: 16px; }
+    .countdown-bar { height: 4px; background: #049FD9; border-radius: 2px; width: 100%; transition: width 1s linear; }
 
-    /* Barra timeout */
-    .timeout-bar-wrap {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 4px;
-      background: #eee;
-    }
-    .timeout-bar {
-      height: 4px;
-      background: #049FD9;
-      width: 100%;
-      transition: none;
-    }
-
-    .error-msg {
+    /* --- Errore --- */
+    .error-box {
       background: #fff0f0;
       border: 1px solid #ffcccc;
       color: #cc0000;
       border-radius: 8px;
-      padding: 12px 16px;
+      padding: 14px 16px;
       font-size: 14px;
+      margin-top: 16px;
+    }
+    .btn-retry {
       margin-top: 12px;
-      display: none;
+      padding: 10px 24px;
+      background: #049FD9;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
     }
-
-    .spinner {
-      width: 22px; height: 22px;
-      border: 3px solid rgba(255,255,255,0.4);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin .7s linear infinite;
-      display: inline-block;
-      vertical-align: middle;
-      margin-right: 8px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .hidden { display: none !important; }
   </style>
 </head>
 <body>
 <div class="card">
-
-  <!-- Pulsante chiudi sempre visibile -->
-  <button class="btn-close" onclick="closeDialog()" title="Chiudi">×</button>
-
   <div class="left">
-    <img src="logo azienda.jpg" alt="Logo Azienda">
+    <img src="logo azienda.jpg" alt="Logo">
   </div>
-
   <div class="right">
-    <div id="step-name">
-      <h2>Chi sei?</h2>
-      <div class="form-group">
-        <label>Nome e Cognome</label>
-        <div class="input-fake placeholder" id="display-name" onclick="openKeyboard('name')">Es. Mario Rossi</div>
-        <div class="keyboard-hint">⌨️ Tocca per aprire la tastiera</div>
+
+    <!-- Step: invio in corso -->
+    <div id="step-sending" class="step spinner-wrap">
+      <div class="spinner"></div>
+      <div>
+        <div class="sending-title">Invio in corso…</div>
+        <div class="sending-sub">Stiamo inviando la tua segnalazione</div>
       </div>
-      <button class="btn-submit" id="btn-name-next">Continua →</button>
     </div>
 
-    <div id="step-category" class="hidden">
-      <h2>Cosa non va?</h2>
-      <button class="btn-category" data-cat="Audio / Video">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#049FD9" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-        Audio / Video
-      </button>
-      <button class="btn-category" data-cat="Qualcosa nella sala">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#049FD9" stroke-width="2"><path d="M9 21h6M12 3a6 6 0 0 1 6 6c0 2.5-1.5 4.5-3 6H9c-1.5-1.5-3-3.5-3-6a6 6 0 0 1 6-6z"/></svg>
-        Qualcosa nella sala
-      </button>
-      <button class="btn-category" data-cat="Rete / Connettività">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#049FD9" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10A15.3 15.3 0 0 1 12 2z"/></svg>
-        Rete / Connettività
-      </button>
-      <button class="btn-category" data-cat="Altro">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#049FD9" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        Altro
-      </button>
-    </div>
-
-    <div id="step-details" class="hidden">
-      <div id="cat-badge" class="category-badge"></div>
-      <h2>Descrivi il problema</h2>
-      <div class="form-group">
-        <label>Dettagli aggiuntivi (opzionale)</label>
-        <div class="input-fake-multiline placeholder" id="display-details" onclick="openKeyboardMultiline('details')">Es. Il microfono non funziona durante le chiamate...</div>
-        <div class="keyboard-hint">⌨️ Tocca per aprire la tastiera</div>
-      </div>
-      <button class="btn-submit" id="btn-submit">Invia Segnalazione</button>
-      <div id="error-msg" class="error-msg">Errore nell'invio. Riprova o contatta il supporto.</div>
-      <button class="btn-back" id="btn-back">← Torna indietro</button>
-    </div>
-
-    <div id="step-success" class="hidden">
+    <!-- Step: successo -->
+    <div id="step-success" class="step success-wrap">
       <div class="success-icon">✅</div>
       <div class="success-title">Segnalazione inviata!</div>
       <div class="success-sub">Grazie <strong id="thank-name"></strong>, provvederemo al più presto.</div>
-      <p style="font-size:13px;color:#aaa;">La finestra si chiuderà automaticamente tra <strong id="countdown">5</strong> secondi…</p>
+      <div class="countdown-text">La finestra si chiude tra <strong id="countdown">5</strong> secondi…</div>
+      <div class="countdown-bar-wrap"><div class="countdown-bar" id="countdown-bar"></div></div>
     </div>
-  </div>
 
-  <!-- Barra timeout visiva (5 min di inattività) -->
-  <div class="timeout-bar-wrap">
-    <div class="timeout-bar" id="timeout-bar"></div>
-  </div>
+    <!-- Step: errore -->
+    <div id="step-error" class="step">
+      <div class="error-box">
+        ⚠️ Errore durante l'invio. Controlla la connessione e riprova.<br>
+        <small id="error-detail"></small>
+      </div>
+      <button class="btn-retry" onclick="sendWebhook()">Riprova</button>
+    </div>
 
+  </div>
 </div>
 
 <script>
-  const WEBHOOK_URL = 'https://webexapis.com/v1/webhooks/incoming/Y2lzY29zcGFyazovL3VzL1dFQkhPT0svZGZiMmUxY2QtOGY4Ny00MmU0LWFlMDUtM2VkOWIzZTAyOGZk';
   const params = new URLSearchParams(location.search);
-  const roomName = params.get('roomname') || 'Sala sconosciuta';
-  const TIMEOUT_MS = 5 * 60 * 1000; // 5 minuti inattività
+  const DATA = {
+    name:       params.get('name')     || 'Anonimo',
+    room:       params.get('room')     || 'Sala sconosciuta',
+    category:   params.get('category') || 'Non specificata',
+    details:    params.get('details')  || '',
+    webhook:    params.get('webhook')  || '',
+    autosubmit: params.get('autosubmit') === '1',
+  };
 
-  let reporterName = '';
-  let selectedCat = '';
-  let detailsText = '';
-  let inactivityTimer = null;
-  let barInterval = null;
-  let barStart = Date.now();
+  document.getElementById('thank-name').textContent = DATA.name;
 
-  // --- Chiusura ---
-  function closeDialog() {
-    window.postMessage(JSON.stringify({ type: 'close' }), '*');
-  }
-
-  // --- Timeout inattività ---
-  function resetTimer() {
-    clearTimeout(inactivityTimer);
-    clearInterval(barInterval);
-    barStart = Date.now();
-    document.getElementById('timeout-bar').style.width = '100%';
-
-    // Anima la barra
-    barInterval = setInterval(() => {
-      const elapsed = Date.now() - barStart;
-      const pct = Math.max(0, 100 - (elapsed / TIMEOUT_MS) * 100);
-      document.getElementById('timeout-bar').style.width = pct + '%';
-      document.getElementById('timeout-bar').style.transition = 'width 1s linear';
-    }, 1000);
-
-    inactivityTimer = setTimeout(() => {
-      clearInterval(barInterval);
-      closeDialog();
-    }, TIMEOUT_MS);
-  }
-
-  document.addEventListener('click', resetTimer);
-  document.addEventListener('touchstart', resetTimer);
-  resetTimer();
-
-  // --- Navigazione step ---
   function show(id) {
-    ['step-name','step-category','step-details','step-success'].forEach(s => {
-      document.getElementById(s).classList.add('hidden');
-    });
-    document.getElementById(id).classList.remove('hidden');
-    resetTimer();
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
   }
 
-  // --- Tastiera nativa RoomOS ---
-  function openKeyboard(field) {
-    const titles = { name: 'Nome e Cognome', details: 'Dettagli aggiuntivi' };
-    const placeholders = { name: 'Es. Mario Rossi', details: 'Es. Il microfono non funziona...' };
-    window.postMessage(JSON.stringify({
-      type: 'openKeyboard',
-      field,
-      title: titles[field],
-      placeholder: placeholders[field],
-    }), '*');
-  }
-
-  function openKeyboardMultiline(field) {
-    window.postMessage(JSON.stringify({
-      type: 'openKeyboardMultiline',
-      field,
-      title: 'Dettagli aggiuntivi',
-      placeholder: 'Es. Il microfono non funziona durante le chiamate...',
-    }), '*');
-  }
-
-  // Riceve il testo dalla macro
-  window.addEventListener('message', event => {
-    let msg;
-    try { msg = JSON.parse(event.data); } catch(e) { return; }
-    if (msg.type !== 'textInput') return;
-    resetTimer();
-
-    if (msg.field === 'name') {
-      reporterName = msg.value;
-      const el = document.getElementById('display-name');
-      el.textContent = msg.value || 'Es. Mario Rossi';
-      el.classList.toggle('placeholder', !msg.value);
-      el.classList.toggle('active', !!msg.value);
-    }
-    if (msg.field === 'details') {
-      detailsText = msg.value;
-      const el = document.getElementById('display-details');
-      el.textContent = msg.value || 'Es. Il microfono non funziona durante le chiamate...';
-      el.classList.toggle('placeholder', !msg.value);
-    }
-  });
-
-  // --- Step name ---
-  document.getElementById('btn-name-next').addEventListener('click', () => {
-    if (!reporterName) { openKeyboard('name'); return; }
-    show('step-category');
-  });
-
-  // --- Step category ---
-  document.querySelectorAll('.btn-category').forEach(btn => {
-    btn.addEventListener('click', () => {
-      selectedCat = btn.dataset.cat;
-      document.getElementById('cat-badge').innerHTML = selectedCat;
-      show('step-details');
-    });
-  });
-
-  document.getElementById('btn-back').addEventListener('click', () => show('step-category'));
-
-  // --- Invio ---
-  document.getElementById('btn-submit').addEventListener('click', async () => {
-    const btn = document.getElementById('btn-submit');
-    const errEl = document.getElementById('error-msg');
-    errEl.style.display = 'none';
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> Invio in corso...';
-
+  async function sendWebhook() {
+    show('step-sending');
     const now = new Date().toLocaleString('it-IT', { timeZone: 'Europe/Rome' });
     const markdown =
-      `## \uD83D\uDEA8 Nuova Segnalazione Problemi\n\n---\n` +
+      `## 🚨 Nuova Segnalazione Problemi\n\n---\n` +
       `| Campo | Valore |\n|-------|--------|\n` +
-      `| \uD83D\uDC64 **Segnalato da** | ${reporterName} |\n` +
-      `| \uD83C\uDFE0 **Sala** | ${roomName} |\n` +
-      `| \u26A0\uFE0F **Categoria** | ${selectedCat} |\n` +
-      `| \uD83D\uDCAC **Dettagli** | ${detailsText || '_Nessun dettaglio_'} |\n` +
-      `| \uD83D\uDD50 **Data/Ora** | ${now} |`;
+      `| 👤 **Segnalato da** | ${DATA.name} |\n` +
+      `| 🏠 **Sala** | ${DATA.room} |\n` +
+      `| ⚠️ **Categoria** | ${DATA.category} |\n` +
+      `| 💬 **Dettagli** | ${DATA.details || '_Nessun dettaglio_'} |\n` +
+      `| 🕐 **Data/Ora** | ${now} |`;
 
     try {
-      await fetch(WEBHOOK_URL, {
+      const res = await fetch(DATA.webhook, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ markdown }),
       });
-      document.getElementById('thank-name').textContent = reporterName;
-      show('step-success');
-
-      // Countdown 5s poi chiude
-      let sec = 5;
-      const cd = document.getElementById('countdown');
-      const iv = setInterval(() => {
-        sec--;
-        cd.textContent = sec;
-        if (sec <= 0) { clearInterval(iv); closeDialog(); }
-      }, 1000);
-
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      startCountdown();
     } catch(e) {
-      errEl.style.display = 'block';
-      btn.disabled = false;
-      btn.innerHTML = 'Invia Segnalazione';
+      document.getElementById('error-detail').textContent = e.message;
+      show('step-error');
     }
-  });
+  }
+
+  function startCountdown() {
+    show('step-success');
+    let sec = 5;
+    const cd = document.getElementById('countdown');
+    const bar = document.getElementById('countdown-bar');
+    // Avvia animazione barra
+    requestAnimationFrame(() => {
+      bar.style.transition = `width ${sec}s linear`;
+      bar.style.width = '0%';
+    });
+    const iv = setInterval(() => {
+      sec--;
+      cd.textContent = sec;
+      if (sec <= 0) { clearInterval(iv); }
+    }, 1000);
+  }
+
+  // Auto-submit appena la pagina è caricata
+  if (DATA.autosubmit && DATA.webhook) {
+    sendWebhook();
+  } else {
+    show('step-error');
+    document.getElementById('error-detail').textContent = 'Parametri mancanti.';
+  }
 </script>
 </body>
 </html>
