@@ -2,8 +2,8 @@
  * ============================================================
  *  Report Issue → Webex Webhook
  *  Approccio: tastiera nativa RoomOS PRIMA della WebView
- *  Flusso: Panel click → TextInput nome → TextInput dettagli
- *          → WebView di conferma con tutti i dati nell'URL
+ *  Flusso: Panel click → TextInput nome → Prompt categoria
+ *          → TextInput dettagli → WebView autosubmit
  * ============================================================ */
 
 import xapi from 'xapi';
@@ -13,9 +13,8 @@ const CONFIG = {
   WEBHOOK_URL: 'https://webexapis.com/v1/webhooks/incoming/Y2lzY29zcGFyazovL3VzL1dFQkhPT0svZGZiMmUxY2QtOGY4Ny00MmU0LWFlMDUtM2VkOWIzZTAyOGZk',
 };
 
-// Stato sessione
 let session = {
-  step: null,  // 'name' | 'category' | 'details'
+  step: null,
   name: '',
   category: '',
 };
@@ -25,8 +24,8 @@ async function getRoomName() {
   catch(e) { return 'Sala sconosciuta'; }
 }
 
-// Step 1: chiede il nome
-async function askName() {
+// Step 1 — nome
+function askName() {
   session = { step: 'name', name: '', category: '' };
   xapi.Command.UserInterface.Message.TextInput.Display({
     FeedbackId: 'ri_input',
@@ -35,68 +34,59 @@ async function askName() {
     Placeholder: 'Es. Mario Rossi',
     InputType: 'SingleLine',
     KeyboardState: 'Open',
-    SubmitText: 'Continua →',
+    SubmitText: 'Continua',
     Duration: 0,
   });
 }
 
-// Step 2: chiede la categoria via prompt
+// Step 2 — categoria
 function askCategory() {
   session.step = 'category';
   xapi.Command.UserInterface.Message.Prompt.Display({
     FeedbackId: 'ri_category',
     Title: 'Cosa non va?',
     Text: 'Seleziona la categoria del problema',
-    'Option.1': '🔊 Audio / Video',
-    'Option.2': '💡 Qualcosa nella sala',
-    'Option.3': '🌐 Rete / Connettività',
-    'Option.4': '❓ Altro',
+    'Option.1': 'Audio / Video',
+    'Option.2': 'Qualcosa nella sala',
+    'Option.3': 'Rete / Connettivita',
+    'Option.4': 'Altro',
   });
 }
 
-// Step 3: chiede i dettagli
+// Step 3 — dettagli (NESSUN \n nel campo Text)
 function askDetails() {
   session.step = 'details';
   xapi.Command.UserInterface.Message.TextInput.Display({
     FeedbackId: 'ri_input',
-    Title: 'Dettagli aggiuntivi',
-    Text: `Problema: ${session.category}\nAggiungi dettagli (opzionale)`,
-    Placeholder: 'Es. Il microfono non funziona durante le chiamate...',
-    InputType: 'MultiLine',
+    Title: 'Dettagli aggiuntivi (opzionale)',
+    Text: 'Aggiungi ulteriori informazioni sul problema',
+    Placeholder: 'Es. Il microfono non funziona durante le chiamate',
+    InputType: 'SingleLine',
     KeyboardState: 'Open',
     SubmitText: 'Invia segnalazione',
     Duration: 0,
   });
 }
 
-// Apre la WebView di conferma passando i dati nell'URL
+// Apre WebView con tutti i dati nell'URL
 async function openConfirmWebView(details) {
   const room = await getRoomName();
   const params = new URLSearchParams({
     name: session.name,
-    room,
+    room: room,
     category: session.category,
     details: details || '',
     webhook: CONFIG.WEBHOOK_URL,
     autosubmit: '1',
   });
-  const url = `${CONFIG.PAGE_URL}?${params.toString()}`;
+  const url = CONFIG.PAGE_URL + '?' + params.toString();
   xapi.Command.UserInterface.WebView.Display({
     Url: url,
     Mode: 'Modal',
   });
 }
 
-// Chiude la WebView
-function closeWebView() {
-  try {
-    xapi.Command.UserInterface.WebView.Clear({ Target: 'Modal' });
-  } catch(e) {
-    xapi.Command.UserInterface.WebView.Clear();
-  }
-}
-
-// --- Listener pulsante pannello ---
+// --- Listener pannello ---
 xapi.Event.UserInterface.Extensions.Panel.Clicked.on(event => {
   if (event.PanelId !== 'report_issue') return;
   askName();
@@ -116,21 +106,19 @@ xapi.Event.UserInterface.Message.TextInput.Response.on(event => {
 xapi.Event.UserInterface.Message.TextInput.Clear.on(event => {
   if (event.FeedbackId !== 'ri_input') return;
   if (session.step === 'name') {
-    // Annullato al primo step: non fare nulla
     session.step = null;
   } else if (session.step === 'details') {
-    // Salta i dettagli e invia senza
     openConfirmWebView('');
   }
 });
 
-// --- Listener Prompt (categoria) ---
+// --- Listener Prompt categoria ---
 xapi.Event.UserInterface.Message.Prompt.Response.on(event => {
   if (event.FeedbackId !== 'ri_category') return;
   const cats = {
     '1': 'Audio / Video',
     '2': 'Qualcosa nella sala',
-    '3': 'Rete / Connettività',
+    '3': 'Rete / Connettivita',
     '4': 'Altro',
   };
   session.category = cats[event.OptionId] || 'Altro';
@@ -139,10 +127,7 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(event => {
 
 xapi.Event.UserInterface.Message.Prompt.Cleared.on(event => {
   if (event.FeedbackId !== 'ri_category') return;
-  session.step = null; // annullato
+  session.step = null;
 });
 
-// --- Listener chiusura WebView dal pulsante X nella pagina ---
-// La pagina usa HttpClient per segnalare la chiusura (vedi sotto)
-// oppure si auto-chiude dopo 5s dal success
-console.log('[Report Issue] Macro avviata — flusso tastiera nativa attivo');
+console.log('[Report Issue] Macro avviata - flusso tastiera nativa attivo');
