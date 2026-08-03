@@ -1,14 +1,13 @@
 /**
  * ============================================================
  *  Report Issue → Web Dialog → Webex Webhook
- *  Macro RoomOS — gestisce tastiera nativa via xAPI TextInput
+ *  Macro RoomOS — gestisce tastiera nativa + chiusura WebView
  * ============================================================ */
 
 import xapi from 'xapi';
 
 const DIALOG_URL = 'https://hunterwood01.github.io/report-issue-webex/';
 
-// Quale campo è in attesa di input ('name' | 'details' | null)
 let pendingField = null;
 
 async function getRoomName() {
@@ -17,6 +16,11 @@ async function getRoomName() {
   } catch(e) {
     return 'Sala sconosciuta';
   }
+}
+
+// Chiude il WebView
+function closeWebView() {
+  xapi.Command.UserInterface.WebView.Clear({ Target: 'Modal' });
 }
 
 // Apre il WebView modale
@@ -30,11 +34,9 @@ xapi.Event.UserInterface.Extensions.Panel.Clicked.on(async event => {
   });
 });
 
-// Riceve messaggi dalla pagina web (postMessage)
-xapi.Event.UserInterface.Extensions.Widget.Action.on(() => {});
+// Risposta tastiera nativa
 xapi.Event.UserInterface.Message.TextInput.Response.on(event => {
   if (!pendingField) return;
-  // Rimanda il testo inserito alla WebView
   xapi.Command.UserInterface.WebView.Send({
     Message: JSON.stringify({ type: 'textInput', field: pendingField, value: event.Text }),
   });
@@ -49,13 +51,19 @@ xapi.Event.UserInterface.Message.TextInput.Clear.on(() => {
   pendingField = null;
 });
 
-// Riceve richieste di tastiera dalla WebView
-xapi.Event.UserInterface.Extensions.Panel.Clicked.on(() => {});
+// Riceve messaggi dalla WebView
 try {
   xapi.Event.UserInterface.WebView.Message.on(event => {
     let msg;
     try { msg = JSON.parse(event.Message); } catch(e) { return; }
 
+    // Chiusura dal pulsante X o dopo success
+    if (msg.type === 'close') {
+      closeWebView();
+      return;
+    }
+
+    // Tastiera riga singola
     if (msg.type === 'openKeyboard') {
       pendingField = msg.field;
       xapi.Command.UserInterface.Message.TextInput.Display({
@@ -70,6 +78,7 @@ try {
       });
     }
 
+    // Tastiera multiriga
     if (msg.type === 'openKeyboardMultiline') {
       pendingField = msg.field;
       xapi.Command.UserInterface.Message.TextInput.Display({
@@ -88,4 +97,4 @@ try {
   console.log('[Report Issue] WebView.Message non disponibile su questa versione RoomOS');
 }
 
-console.log('[Report Issue] Macro avviata — tastiera nativa RoomOS attiva');
+console.log('[Report Issue] Macro avviata — tastiera nativa + chiusura WebView attivi');
