@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <Extensions>
   <Version>1.11</Version>
+  <!-- Pulsante principale: apre il flusso segnalazione -->
   <Panel>
     <PanelId>report_issue</PanelId>
     <Origin>local</Origin>
@@ -8,6 +9,16 @@
     <Icon>Helpdesk</Icon>
     <Color>#CF7900</Color>
     <Name>Segnala Problema</Name>
+    <ActivityType>Custom</ActivityType>
+  </Panel>
+  <!-- Pulsante secondario: chiude la WebView e torna alla home -->
+  <Panel>
+    <PanelId>report_issue_close</PanelId>
+    <Origin>local</Origin>
+    <Location>HomeScreenButton</Location>
+    <Icon>EndCall</Icon>
+    <Color>#E8001B</Color>
+    <Name>Chiudi Pagina</Name>
     <ActivityType>Custom</ActivityType>
   </Panel>
 </Extensions>

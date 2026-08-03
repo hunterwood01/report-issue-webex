@@ -4,6 +4,10 @@
  *  Flusso: Panel click -> TextInput nome -> Prompt categoria
  *          -> TextInput dettagli -> WebView su TV + Touch
  *          -> chiusura automatica dopo CLOSE_DELAY_MS
+ *
+ *  Pulsanti Home Screen:
+ *    report_issue       -> avvia il flusso
+ *    report_issue_close -> chiude la WebView e torna alla home
  * ============================================================ */
 
 import xapi from 'xapi';
@@ -11,16 +15,16 @@ import xapi from 'xapi';
 const CONFIG = {
   PAGE_URL: 'https://hunterwood01.github.io/report-issue-webex/',
   WEBHOOK_URL: 'https://webexapis.com/v1/webhooks/incoming/Y2lzY29zcGFyazovL3VzL1dFQkhPT0svZGZiMmUxY2QtOGY4Ny00MmU0LWFlMDUtM2VkOWIzZTAyOGZk',
-  CLOSE_DELAY_MS: 6000,  // chiude dopo 6s (la pagina mostra countdown 5s)
+  CLOSE_DELAY_MS: 6000,
 };
 
-let session = {
+var session = {
   step: null,
   name: '',
   category: '',
 };
 
-let closeTimer = null;
+var closeTimer = null;
 
 async function getRoomName() {
   try { return await xapi.Status.UserInterface.ContactInfo.Name.get(); }
@@ -35,17 +39,24 @@ function buildQueryString(obj) {
     .join('&');
 }
 
-// Chiude WebView su entrambi i target
-function closeWebView() {
+// Chiude WebView su OSD e Controller e resetta la sessione
+function closeAndReset() {
+  // Cancella il timer automatico se attivo
+  if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
+  // Chiudi WebView su entrambi i target
   try { xapi.Command.UserInterface.WebView.Clear({ Target: 'OSD' }); } catch(e) {}
   try { xapi.Command.UserInterface.WebView.Clear({ Target: 'Controller' }); } catch(e) {}
-  console.log('[Report Issue] WebView chiusa');
+  // Chiudi eventuali dialog nativi aperti
+  try { xapi.Command.UserInterface.Message.TextInput.Clear({ FeedbackId: 'ri_input' }); } catch(e) {}
+  try { xapi.Command.UserInterface.Message.Prompt.Clear({ FeedbackId: 'ri_category' }); } catch(e) {}
+  // Reset sessione
+  session = { step: null, name: '', category: '' };
+  console.log('[Report Issue] Sessione chiusa - tornato alla home');
 }
 
 // Step 1 - nome
 function askName() {
   session = { step: 'name', name: '', category: '' };
-  // Cancella eventuale timer di chiusura rimasto
   if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
   xapi.Command.UserInterface.Message.TextInput.Display({
     FeedbackId: 'ri_input',
@@ -88,7 +99,7 @@ function askDetails() {
   });
 }
 
-// Apre WebView su TV e Touch, poi la chiude automaticamente dopo CLOSE_DELAY_MS
+// Apre WebView su TV e Touch, poi chiude automaticamente
 async function openConfirmWebView(details) {
   var room = await getRoomName();
   var qs = buildQueryString({
@@ -106,17 +117,23 @@ async function openConfirmWebView(details) {
 
   console.log('[Report Issue] WebView aperta, chiusura automatica tra ' + (CONFIG.CLOSE_DELAY_MS / 1000) + 's');
 
-  // Chiusura automatica gestita dalla macro (postMessage non funziona su RoomOS)
   closeTimer = setTimeout(function() {
-    closeWebView();
-    closeTimer = null;
+    closeAndReset();
   }, CONFIG.CLOSE_DELAY_MS);
 }
 
 // --- Listener pannello ---
 xapi.Event.UserInterface.Extensions.Panel.Clicked.on(function(event) {
-  if (event.PanelId !== 'report_issue') return;
-  askName();
+  // Avvia flusso
+  if (event.PanelId === 'report_issue') {
+    askName();
+    return;
+  }
+  // Chiude e torna alla home
+  if (event.PanelId === 'report_issue_close') {
+    closeAndReset();
+    return;
+  }
 });
 
 // --- Listener TextInput ---
@@ -157,4 +174,4 @@ xapi.Event.UserInterface.Message.Prompt.Cleared.on(function(event) {
   session.step = null;
 });
 
-console.log('[Report Issue] Macro avviata - chiusura automatica attiva');
+console.log('[Report Issue] Macro avviata - pulsante Chiudi Pagina attivo');
