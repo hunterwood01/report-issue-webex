@@ -2,10 +2,7 @@
  * ============================================================
  *  Report Issue -> Webex Webhook
  *  Flusso: Panel click -> TextInput nome -> Prompt categoria
- *          -> TextInput dettagli -> WebView OSD autosubmit
- *
- *  - Tastiera nativa sul Touch panel
- *  - WebView di conferma sulla TV (OSD)
+ *          -> TextInput dettagli -> WebView su TV + Touch
  * ============================================================ */
 
 import xapi from 'xapi';
@@ -24,6 +21,15 @@ let session = {
 async function getRoomName() {
   try { return await xapi.Status.UserInterface.ContactInfo.Name.get(); }
   catch(e) { return 'Sala sconosciuta'; }
+}
+
+// Costruisce query string senza URLSearchParams (non supportato da QuickJS)
+function buildQueryString(obj) {
+  return Object.keys(obj)
+    .map(function(k) {
+      return encodeURIComponent(k) + '=' + encodeURIComponent(obj[k]);
+    })
+    .join('&');
 }
 
 // Step 1 - nome
@@ -70,10 +76,10 @@ function askDetails() {
   });
 }
 
-// Apre WebView di conferma sulla TV (OSD) con i dati nell'URL
+// Apre WebView su TV (OSD) e Touch panel (Controller)
 async function openConfirmWebView(details) {
   const room = await getRoomName();
-  const params = new URLSearchParams({
+  const qs = buildQueryString({
     name: session.name,
     room: room,
     category: session.category,
@@ -81,29 +87,35 @@ async function openConfirmWebView(details) {
     webhook: CONFIG.WEBHOOK_URL,
     autosubmit: '1',
   });
-  const url = CONFIG.PAGE_URL + '?' + params.toString();
+  const url = CONFIG.PAGE_URL + '?' + qs;
 
-  // Target: OSD -> apre sulla TV/schermo principale
-  // Il Touch panel rimane libero e mostra il pannello normale
+  // Apre sulla TV
   xapi.Command.UserInterface.WebView.Display({
     Url: url,
     Target: 'OSD',
   });
+
+  // Apre anche sul Touch panel
+  xapi.Command.UserInterface.WebView.Display({
+    Url: url,
+    Target: 'Controller',
+  });
 }
 
-// Chiude WebView OSD (es. dopo 5s dal success, gestito dalla pagina)
+// Chiude WebView su entrambi i target
 function closeWebView() {
   xapi.Command.UserInterface.WebView.Clear({ Target: 'OSD' });
+  xapi.Command.UserInterface.WebView.Clear({ Target: 'Controller' });
 }
 
 // --- Listener pannello ---
-xapi.Event.UserInterface.Extensions.Panel.Clicked.on(event => {
+xapi.Event.UserInterface.Extensions.Panel.Clicked.on(function(event) {
   if (event.PanelId !== 'report_issue') return;
   askName();
 });
 
 // --- Listener TextInput ---
-xapi.Event.UserInterface.Message.TextInput.Response.on(event => {
+xapi.Event.UserInterface.Message.TextInput.Response.on(function(event) {
   if (event.FeedbackId !== 'ri_input') return;
   if (session.step === 'name') {
     session.name = event.Text.trim() || 'Anonimo';
@@ -113,20 +125,19 @@ xapi.Event.UserInterface.Message.TextInput.Response.on(event => {
   }
 });
 
-xapi.Event.UserInterface.Message.TextInput.Clear.on(event => {
+xapi.Event.UserInterface.Message.TextInput.Clear.on(function(event) {
   if (event.FeedbackId !== 'ri_input') return;
   if (session.step === 'name') {
     session.step = null;
   } else if (session.step === 'details') {
-    // Premiuto Annulla: invia senza dettagli
     openConfirmWebView('');
   }
 });
 
 // --- Listener Prompt categoria ---
-xapi.Event.UserInterface.Message.Prompt.Response.on(event => {
+xapi.Event.UserInterface.Message.Prompt.Response.on(function(event) {
   if (event.FeedbackId !== 'ri_category') return;
-  const cats = {
+  var cats = {
     '1': 'Audio / Video',
     '2': 'Qualcosa nella sala',
     '3': 'Rete / Connettivita',
@@ -136,9 +147,9 @@ xapi.Event.UserInterface.Message.Prompt.Response.on(event => {
   askDetails();
 });
 
-xapi.Event.UserInterface.Message.Prompt.Cleared.on(event => {
+xapi.Event.UserInterface.Message.Prompt.Cleared.on(function(event) {
   if (event.FeedbackId !== 'ri_category') return;
   session.step = null;
 });
 
-console.log('[Report Issue] Macro avviata - OSD attivo');
+console.log('[Report Issue] Macro avviata - OSD + Controller attivi');
