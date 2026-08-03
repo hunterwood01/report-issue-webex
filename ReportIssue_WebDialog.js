@@ -1,9 +1,11 @@
 /**
  * ============================================================
- *  Report Issue → Webex Webhook
- *  Approccio: tastiera nativa RoomOS PRIMA della WebView
- *  Flusso: Panel click → TextInput nome → Prompt categoria
- *          → TextInput dettagli → WebView autosubmit
+ *  Report Issue -> Webex Webhook
+ *  Flusso: Panel click -> TextInput nome -> Prompt categoria
+ *          -> TextInput dettagli -> WebView OSD autosubmit
+ *
+ *  - Tastiera nativa sul Touch panel
+ *  - WebView di conferma sulla TV (OSD)
  * ============================================================ */
 
 import xapi from 'xapi';
@@ -24,7 +26,7 @@ async function getRoomName() {
   catch(e) { return 'Sala sconosciuta'; }
 }
 
-// Step 1 — nome
+// Step 1 - nome
 function askName() {
   session = { step: 'name', name: '', category: '' };
   xapi.Command.UserInterface.Message.TextInput.Display({
@@ -39,7 +41,7 @@ function askName() {
   });
 }
 
-// Step 2 — categoria
+// Step 2 - categoria
 function askCategory() {
   session.step = 'category';
   xapi.Command.UserInterface.Message.Prompt.Display({
@@ -53,7 +55,7 @@ function askCategory() {
   });
 }
 
-// Step 3 — dettagli (NESSUN \n nel campo Text)
+// Step 3 - dettagli
 function askDetails() {
   session.step = 'details';
   xapi.Command.UserInterface.Message.TextInput.Display({
@@ -68,7 +70,7 @@ function askDetails() {
   });
 }
 
-// Apre WebView con tutti i dati nell'URL
+// Apre WebView di conferma sulla TV (OSD) con i dati nell'URL
 async function openConfirmWebView(details) {
   const room = await getRoomName();
   const params = new URLSearchParams({
@@ -80,10 +82,18 @@ async function openConfirmWebView(details) {
     autosubmit: '1',
   });
   const url = CONFIG.PAGE_URL + '?' + params.toString();
+
+  // Target: OSD -> apre sulla TV/schermo principale
+  // Il Touch panel rimane libero e mostra il pannello normale
   xapi.Command.UserInterface.WebView.Display({
     Url: url,
-    Mode: 'Modal',
+    Target: 'OSD',
   });
+}
+
+// Chiude WebView OSD (es. dopo 5s dal success, gestito dalla pagina)
+function closeWebView() {
+  xapi.Command.UserInterface.WebView.Clear({ Target: 'OSD' });
 }
 
 // --- Listener pannello ---
@@ -108,6 +118,7 @@ xapi.Event.UserInterface.Message.TextInput.Clear.on(event => {
   if (session.step === 'name') {
     session.step = null;
   } else if (session.step === 'details') {
+    // Premiuto Annulla: invia senza dettagli
     openConfirmWebView('');
   }
 });
@@ -130,4 +141,4 @@ xapi.Event.UserInterface.Message.Prompt.Cleared.on(event => {
   session.step = null;
 });
 
-console.log('[Report Issue] Macro avviata - flusso tastiera nativa attivo');
+console.log('[Report Issue] Macro avviata - OSD attivo');
