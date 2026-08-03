@@ -4,206 +4,198 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Segnala Problema</title>
-  <!-- jsxapi: libreria ufficiale Cisco per accesso xAPI dalla WebView -->
-  <script src="https://unpkg.com/jsxapi@5.4.1/dist/jsxapi.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'CiscoSansTT', 'Helvetica Neue', Arial, sans-serif;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
       background: #f4f4f4;
       display: flex;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
+      padding: 16px;
     }
     .card {
       background: white;
-      border-radius: 16px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-      width: 90%;
-      max-width: 680px;
+      border-radius: 20px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.13);
+      width: 100%;
+      max-width: 720px;
       overflow: hidden;
       position: relative;
-      display: flex;
-      min-height: 420px;
     }
-    .left {
-      width: 200px;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 32px;
-      border-right: 1px solid #ebebeb;
-      background: white;
+    /* Pulsante X chiudi */
+    .btn-close {
+      position: absolute;
+      top: 16px; right: 16px;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: #f0f0f0;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: #555;
+      z-index: 10;
+      transition: background .15s;
     }
-    .left img { max-width: 130px; max-height: 90px; object-fit: contain; mix-blend-mode: multiply; }
-    .right {
-      flex: 1;
-      padding: 40px 32px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
+    .btn-close:hover { background: #e0e0e0; }
+    .btn-close:active { background: #cc0000; color: white; }
+
+    .inner { padding: 40px 40px 36px; }
+
     .step { display: none; flex-direction: column; }
     .step.active { display: flex; }
 
-    /* Connessione in corso */
-    .connecting { align-items: center; gap: 16px; }
+    h2 { font-size: 22px; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; }
+    .subtitle { font-size: 14px; color: #888; margin-bottom: 28px; }
+
+    /* Input */
+    .field-row { margin-bottom: 20px; }
+    label { display: block; font-size: 12px; font-weight: 600; color: #888;
+            text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+    input[type=text], textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1.5px solid #ddd;
+      border-radius: 12px;
+      font-size: 16px;
+      color: #1a1a1a;
+      background: white;
+      outline: none;
+      transition: border-color .2s;
+      -webkit-appearance: none;
+    }
+    input[type=text]:focus, textarea:focus { border-color: #049FD9; }
+    textarea { resize: none; height: 90px; font-family: inherit; }
+
+    /* Categorie */
+    .cats { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+    .cat-btn {
+      padding: 14px 20px;
+      border: 1.5px solid #ddd;
+      border-radius: 50px;
+      background: white;
+      font-size: 15px;
+      color: #1a1a1a;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color .15s, background .15s;
+    }
+    .cat-btn:hover { border-color: #049FD9; background: #f0faff; }
+    .cat-btn.selected { border-color: #049FD9; background: #e6f6fd; font-weight: 600; }
+
+    /* Badge */
+    .badge {
+      display: inline-block;
+      background: #e6f6fd;
+      color: #049FD9;
+      border-radius: 50px;
+      padding: 4px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 18px;
+    }
+
+    /* Bottoni azione */
+    .btn-primary {
+      width: 100%;
+      padding: 15px;
+      background: #049FD9;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-primary:hover { background: #0381b0; }
+    .btn-primary:disabled { background: #a0d4ec; cursor: not-allowed; }
+    .btn-back {
+      background: none; border: none; color: #aaa;
+      font-size: 13px; cursor: pointer; margin-top: 12px;
+      text-decoration: underline; text-align: center;
+    }
+
+    /* Spinner */
+    .spinner-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 32px 0; }
     .spinner {
-      width: 44px; height: 44px;
+      width: 48px; height: 48px;
       border: 4px solid #e0e0e0;
       border-top-color: #049FD9;
       border-radius: 50%;
       animation: spin .8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .conn-title { font-size: 18px; font-weight: 700; color: #1a1a1a; }
-    .conn-sub { font-size: 13px; color: #888; margin-top: 4px; }
-
-    /* Form step */
-    h2 { font-size: 20px; font-weight: 700; color: #1a1a1a; margin-bottom: 20px; }
-
-    .field-row { margin-bottom: 16px; }
-    label { display: block; font-size: 12px; font-weight: 600; color: #888; margin-bottom: 5px; text-transform: uppercase; letter-spacing: .04em; }
-
-    /* Bottone-campo: tocca per aprire tastiera nativa */
-    .field-btn {
-      width: 100%;
-      padding: 13px 16px;
-      border: 1.5px solid #d8d8d8;
-      border-radius: 10px;
-      background: white;
-      font-size: 15px;
-      color: #1a1a1a;
-      text-align: left;
-      cursor: pointer;
-      transition: border-color .2s;
-      min-height: 48px;
-    }
-    .field-btn.empty { color: #aaa; }
-    .field-btn:hover, .field-btn.filled { border-color: #049FD9; }
-    .keyboard-hint { font-size: 11px; color: #ccc; margin-top: 3px; }
-
-    /* Bottoni categoria */
-    .cat-btn {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      width: 100%;
-      padding: 12px 16px;
-      margin-bottom: 8px;
-      border: 1.5px solid #d8d8d8;
-      border-radius: 50px;
-      background: white;
-      font-size: 14px;
-      color: #1a1a1a;
-      cursor: pointer;
-      transition: border-color .2s, background .2s;
-    }
-    .cat-btn:hover { border-color: #049FD9; background: #f0faff; }
-
-    .badge {
-      display: inline-block;
-      background: #e8f6fd;
-      color: #049FD9;
-      border-radius: 50px;
-      padding: 4px 12px;
-      font-size: 12px;
-      font-weight: 600;
-      margin-bottom: 16px;
-    }
-
-    .btn-submit {
-      width: 100%;
-      padding: 14px;
-      background: #049FD9;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      margin-top: 8px;
-    }
-    .btn-submit:hover { background: #0381b0; }
-    .btn-submit:disabled { background: #a0d4ec; cursor: not-allowed; }
-
-    .btn-back {
-      background: none; border: none; color: #aaa;
-      font-size: 12px; cursor: pointer; margin-top: 10px;
-      text-decoration: underline; text-align: left;
-    }
 
     /* Successo */
-    .success-wrap { align-items: center; text-align: center; }
-    .success-icon { font-size: 52px; margin-bottom: 14px; }
-    .success-title { font-size: 20px; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; }
-    .success-sub { color: #666; font-size: 14px; margin-bottom: 16px; }
-    .countdown-text { font-size: 12px; color: #aaa; }
-    .bar-wrap { width: 100%; height: 3px; background: #eee; border-radius: 2px; margin-top: 12px; }
-    .bar { height: 3px; background: #049FD9; border-radius: 2px; width: 100%; }
+    .success-wrap { align-items: center; text-align: center; padding: 12px 0 8px; }
+    .success-icon { font-size: 56px; margin-bottom: 16px; }
+    .success-title { font-size: 22px; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; }
+    .success-sub { color: #666; font-size: 15px; margin-bottom: 20px; }
+    .countdown-text { font-size: 13px; color: #aaa; }
+    .bar-wrap { width: 100%; height: 4px; background: #eee; border-radius: 4px; margin-top: 14px; }
+    .bar { height: 4px; background: #049FD9; border-radius: 4px; width: 100%; transition: width 1s linear; }
 
     /* Errore */
-    .err-box { background: #fff0f0; border: 1px solid #ffcccc; color: #cc0000; border-radius: 8px; padding: 12px 14px; font-size: 13px; }
-    .btn-retry { margin-top: 10px; padding: 9px 20px; background: #049FD9; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .err-box {
+      background: #fff0f0; border: 1px solid #ffcccc;
+      color: #cc0000; border-radius: 10px;
+      padding: 14px 16px; font-size: 14px;
+      margin-bottom: 16px;
+    }
   </style>
 </head>
 <body>
 <div class="card">
-  <div class="left">
-    <img src="logo azienda.jpg" alt="Logo">
-  </div>
-  <div class="right">
+  <!-- Pulsante chiudi sempre visibile -->
+  <button class="btn-close" id="btn-close" onclick="closePage()" title="Chiudi">&times;</button>
 
-    <!-- Connessione xAPI -->
-    <div id="s-connecting" class="step active connecting">
-      <div class="spinner"></div>
-      <div>
-        <div class="conn-title">Connessione in corso...</div>
-        <div class="conn-sub">Inizializzazione xAPI</div>
-      </div>
-    </div>
+  <div class="inner">
 
     <!-- Step 1: Nome -->
-    <div id="s-name" class="step">
+    <div id="s-name" class="step active">
       <h2>Chi sei?</h2>
+      <p class="subtitle">Inserisci il tuo nome per la segnalazione</p>
       <div class="field-row">
         <label>Nome e Cognome</label>
-        <button class="field-btn empty" id="btn-name" onclick="openKeyboard('name')">Tocca per inserire il nome...</button>
-        <div class="keyboard-hint">Tocca il campo per aprire la tastiera</div>
+        <input type="text" id="inp-name" placeholder="Es. Mario Rossi" autocomplete="off" autofocus>
       </div>
-      <button class="btn-submit" id="btn-name-next" onclick="goToCategory()">Continua</button>
+      <button class="btn-primary" onclick="goToCategory()">Continua &rarr;</button>
     </div>
 
     <!-- Step 2: Categoria -->
     <div id="s-category" class="step">
       <h2>Cosa non va?</h2>
-      <button class="cat-btn" onclick="selectCategory('Audio / Video')">Audio / Video</button>
-      <button class="cat-btn" onclick="selectCategory('Qualcosa nella sala')">Qualcosa nella sala</button>
-      <button class="cat-btn" onclick="selectCategory('Rete / Connettivita')">Rete / Connettivita</button>
-      <button class="cat-btn" onclick="selectCategory('Altro')">Altro</button>
+      <p class="subtitle">Seleziona la categoria del problema</p>
+      <div class="cats">
+        <button class="cat-btn" onclick="selectCategory(this, 'Audio / Video')">&#x1F50A;&nbsp; Audio / Video</button>
+        <button class="cat-btn" onclick="selectCategory(this, 'Qualcosa nella sala')">&#x1F4CB;&nbsp; Qualcosa nella sala</button>
+        <button class="cat-btn" onclick="selectCategory(this, 'Rete / Connettività')">&#x1F4F6;&nbsp; Rete / Connettività</button>
+        <button class="cat-btn" onclick="selectCategory(this, 'Altro')">&#x2753;&nbsp; Altro</button>
+      </div>
+      <button class="btn-back" onclick="show('s-name')">&larr; Torna indietro</button>
     </div>
 
     <!-- Step 3: Dettagli -->
     <div id="s-details" class="step">
       <div class="badge" id="badge-cat"></div>
       <h2>Dettagli aggiuntivi</h2>
+      <p class="subtitle">Opzionale — aggiungi informazioni utili</p>
       <div class="field-row">
-        <label>Descrizione (opzionale)</label>
-        <button class="field-btn empty" id="btn-details" onclick="openKeyboard('details')">Tocca per aggiungere dettagli...</button>
-        <div class="keyboard-hint">Tocca il campo per aprire la tastiera</div>
+        <label>Descrizione</label>
+        <textarea id="inp-details" placeholder="Es. Il microfono non funziona durante le chiamate..."></textarea>
       </div>
-      <button class="btn-submit" onclick="sendReport()">Invia Segnalazione</button>
-      <button class="btn-back" onclick="show('s-category')">Torna indietro</button>
+      <button class="btn-primary" onclick="sendReport()">&#x2709;&nbsp; Invia Segnalazione</button>
+      <button class="btn-back" onclick="show('s-category')">&larr; Torna indietro</button>
     </div>
 
     <!-- Invio -->
-    <div id="s-sending" class="step connecting">
-      <div class="spinner"></div>
-      <div>
-        <div class="conn-title">Invio in corso...</div>
-        <div class="conn-sub">Stiamo inviando la segnalazione</div>
+    <div id="s-sending" class="step">
+      <div class="spinner-wrap">
+        <div class="spinner"></div>
+        <div style="font-size:16px;font-weight:600;color:#333;">Invio in corso...</div>
       </div>
     </div>
 
@@ -211,15 +203,16 @@
     <div id="s-success" class="step success-wrap">
       <div class="success-icon">&#x2705;</div>
       <div class="success-title">Segnalazione inviata!</div>
-      <div class="success-sub">Grazie <strong id="thank-name"></strong>, provvederemo al piu presto.</div>
+      <div class="success-sub">Grazie <strong id="thank-name"></strong>, provvederemo al più presto.</div>
       <div class="countdown-text">Chiusura automatica tra <strong id="cd">6</strong> secondi</div>
       <div class="bar-wrap"><div class="bar" id="bar"></div></div>
     </div>
 
     <!-- Errore -->
     <div id="s-error" class="step">
-      <div class="err-box">Errore durante l'invio. Controlla la connessione.<br><small id="err-detail"></small></div>
-      <button class="btn-retry" onclick="sendReport()">Riprova</button>
+      <div class="err-box">&#x26A0;&nbsp; Errore durante l'invio.<br><small id="err-detail"></small></div>
+      <button class="btn-primary" onclick="sendReport()">Riprova</button>
+      <button class="btn-back" onclick="show('s-details')">&larr; Torna ai dettagli</button>
     </div>
 
   </div>
@@ -230,98 +223,47 @@
   var ROOM    = params.get('room')    || 'Sala sconosciuta';
   var WEBHOOK = params.get('webhook') || '';
 
-  var state = { name: '', category: '', details: '' };
-  var xapi = null;
-  var activeField = null;
+  var state = { name: '', category: '' };
 
   function show(id) {
     document.querySelectorAll('.step').forEach(function(s) { s.classList.remove('active'); });
     document.getElementById(id).classList.add('active');
-  }
-
-  // Connessione jsxapi locale al device
-  function connectXapi() {
-    try {
-      // jsxapi nativo disponibile nella WebView RoomOS
-      xapi = window.jsxapi.connect('ws://localhost', { clientId: 'report-issue', clientSecret: '' });
-      xapi.on('ready', function() {
-        console.log('xAPI pronto');
-        show('s-name');
-      });
-      xapi.on('error', function(err) {
-        console.warn('xAPI error: ' + err);
-        // Fallback: mostra form senza tastiera nativa
-        show('s-name');
-      });
-    } catch(e) {
-      console.warn('jsxapi non disponibile: ' + e);
-      show('s-name');
-    }
-  }
-
-  // Apre tastiera nativa RoomOS tramite xAPI
-  function openKeyboard(field) {
-    activeField = field;
-    var titles = { name: 'Nome e Cognome', details: 'Dettagli aggiuntivi' };
-    var placeholders = { name: 'Es. Mario Rossi', details: 'Es. il microfono non funziona' };
-    if (xapi) {
-      xapi.Command.UserInterface.Message.TextInput.Display({
-        FeedbackId: 'ri_page_input',
-        Title: titles[field],
-        Text: 'Inserisci il testo e premi Conferma',
-        Placeholder: placeholders[field],
-        InputType: 'SingleLine',
-        KeyboardState: 'Open',
-        SubmitText: 'Conferma',
-        Duration: 0,
-      }).catch(function(e) { console.warn('TextInput error: ' + e); });
-    }
-  }
-
-  // Ascolta risposta tastiera
-  function listenKeyboard() {
-    if (!xapi) return;
-    xapi.Event.UserInterface.Message.TextInput.Response.on(function(event) {
-      if (event.FeedbackId !== 'ri_page_input') return;
-      var val = event.Text ? event.Text.trim() : '';
-      if (activeField === 'name') {
-        state.name = val || 'Anonimo';
-        var btn = document.getElementById('btn-name');
-        btn.textContent = state.name;
-        btn.classList.remove('empty');
-        btn.classList.add('filled');
-      } else if (activeField === 'details') {
-        state.details = val;
-        var btn2 = document.getElementById('btn-details');
-        btn2.textContent = val || 'Nessun dettaglio aggiunto';
-        btn2.classList.remove('empty');
-        btn2.classList.add('filled');
-      }
-      activeField = null;
-    });
+    // Focus automatico sul campo testo se presente
+    var inp = document.querySelector('#' + id + ' input, #' + id + ' textarea');
+    if (inp) { setTimeout(function(){ inp.focus(); }, 100); }
   }
 
   function goToCategory() {
-    if (!state.name) { openKeyboard('name'); return; }
+    var val = document.getElementById('inp-name').value.trim();
+    if (!val) {
+      document.getElementById('inp-name').focus();
+      document.getElementById('inp-name').style.borderColor = '#E8001B';
+      setTimeout(function(){ document.getElementById('inp-name').style.borderColor = ''; }, 1500);
+      return;
+    }
+    state.name = val;
     show('s-category');
   }
 
-  function selectCategory(cat) {
+  function selectCategory(btn, cat) {
+    document.querySelectorAll('.cat-btn').forEach(function(b){ b.classList.remove('selected'); });
+    btn.classList.add('selected');
     state.category = cat;
     document.getElementById('badge-cat').textContent = cat;
-    show('s-details');
+    setTimeout(function(){ show('s-details'); }, 200);
   }
 
   async function sendReport() {
     show('s-sending');
+    var details = document.getElementById('inp-details').value.trim();
     var now = new Date().toLocaleString('it-IT', { timeZone: 'Europe/Rome' });
     var markdown =
-      '## Nuova Segnalazione Problemi\n\n---\n' +
+      '## \u{1F6A8} Nuova Segnalazione Problemi\n\n' +
       '| Campo | Valore |\n|-------|--------|\n' +
       '| **Segnalato da** | ' + state.name + ' |\n' +
       '| **Sala** | ' + ROOM + ' |\n' +
       '| **Categoria** | ' + state.category + ' |\n' +
-      '| **Dettagli** | ' + (state.details || 'Nessun dettaglio') + ' |\n' +
+      '| **Dettagli** | ' + (details || '_Nessun dettaglio_') + ' |\n' +
       '| **Data/Ora** | ' + now + ' |';
     try {
       var res = await fetch(WEBHOOK, {
@@ -341,30 +283,41 @@
 
   function startCountdown() {
     var sec = 6;
-    var cd = document.getElementById('cd');
+    var cd  = document.getElementById('cd');
     var bar = document.getElementById('bar');
-    requestAnimationFrame(function() {
-      bar.style.transition = 'width 6s linear';
+    // Avvia barra
+    requestAnimationFrame(function(){
       bar.style.width = '0%';
     });
-    var iv = setInterval(function() {
+    var iv = setInterval(function(){
       sec--;
       cd.textContent = sec;
       if (sec <= 0) {
         clearInterval(iv);
-        // Chiude WebView tramite xAPI se disponibile
-        if (xapi) {
-          xapi.Command.UserInterface.WebView.Clear({ Target: 'OSD' }).catch(function(){});
-          xapi.Command.UserInterface.WebView.Clear({ Target: 'Controller' }).catch(function(){});
-        }
+        closePage();
       }
     }, 1000);
   }
 
-  // Avvia
-  connectXapi();
-  // Avvia listener dopo breve delay (aspetta xapi ready)
-  setTimeout(listenKeyboard, 1500);
+  // Chiude la WebView notificando la macro tramite fetch su /close-webview
+  // La macro ascolta su xapi.Event.UserInterface.Extensions.Event.Received
+  // Fallback: prova window.close() per ambienti browser normali
+  function closePage() {
+    // Segnala alla macro di chiudere (polling: la macro legge CustomEvent)
+    try {
+      // Notifica la macro via xapi CustomEvent (funziona se jsxapi disponibile)
+      if (window.xapi) {
+        window.xapi.Command.UserInterface.Extensions.Event.Send({ Signal: 'close_webview' });
+      }
+    } catch(e) {}
+    // Fallback browser
+    window.close();
+  }
+
+  // Enter su campo nome
+  document.getElementById('inp-name').addEventListener('keydown', function(e){
+    if (e.key === 'Enter') { e.preventDefault(); goToCategory(); }
+  });
 </script>
 </body>
 </html>
