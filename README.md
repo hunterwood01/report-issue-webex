@@ -1,30 +1,54 @@
-# Report Issue → Webex Webhook
+# Report Issue - Webex Webhook per dispositivi Cisco RoomOS
 
-Macro RoomOS con interfaccia grafica (web dialog) ospitata su **GitHub Pages**.
-Invia le segnalazioni a uno spazio Webex tramite Incoming Webhook.
+Questa soluzione permette agli utenti in sala riunioni di segnalare problemi direttamente dal pannello Touch Cisco, inviando una notifica via webhook a uno spazio Webex.
 
-## Come funziona
+## Flusso utente
 
-1. L'utente preme **"Segnala Problema"** sul Touch Panel
-2. Si apre un web dialog grafico con logo Cisco
-3. L'utente inserisce nome/cognome, seleziona la categoria e aggiunge dettagli
-4. Il messaggio viene inviato al webhook Webex
+1. Utente preme **Segnala Problema** sulla home screen del Touch panel
+2. Si apre la pagina web su **Touch panel (Controller) e TV (OSD)** contemporaneamente
+3. Tocca il campo Nome → si apre la **tastiera nativa RoomOS**
+4. Seleziona la categoria del problema
+5. Aggiunge dettagli opzionali (tastiera nativa)
+6. Preme **Invia Segnalazione** → messaggio Webex inviato
+7. Pagina si chiude automaticamente dopo 6 secondi
+
+Il pulsante **Chiudi Pagina** (rosso) sulla home screen chiude la WebView in qualsiasi momento.
 
 ## File
 
 | File | Descrizione |
 |------|-------------|
-| `index.html` | Interfaccia grafica (servita da GitHub Pages) |
-| `ReportIssue_WebDialog.js` | Macro da caricare sul dispositivo Cisco |
-| `ReportIssue_Panel.xml` | Pannello UI (pulsante home) |
+| `ReportIssue_WebDialog.js` | Macro RoomOS - gestisce apertura/chiusura WebView |
+| `ReportIssue_Panel.xml` | Pannello UI Extensions - pulsanti home screen |
+| `index.html` | Pagina web (deve essere hostata su GitHub Pages) |
 
-## Deploy
+## Setup sul dispositivo (una tantum)
 
-1. Abilita **GitHub Pages** in: Settings → Pages → Branch: main
-2. Carica `ReportIssue_WebDialog.js` nel **Macro Editor** del dispositivo
-3. Carica `ReportIssue_Panel.xml` nell'**UI Extensions Editor**
-4. Attiva la macro
+### 1. Abilita WebSocket xAPI
+Da SSH o dalla web interface del device:
+```
+xConfiguration NetworkServices HTTP Mode: HTTP+HTTPS
+xConfiguration NetworkServices Websocket: FollowHTTPService
+xConfiguration Security Xapi WebSocket ApiKey Allowed: True
+xConfiguration WebEngine Features Xapi Peripherals AllowedHosts Hosts: hunterwood01.github.io
+```
 
-## URL GitHub Pages
+### 2. Carica la macro
+- Apri il **Macro Editor** sul device
+- Crea una nuova macro e incolla il contenuto di `ReportIssue_WebDialog.js`
+- Salva e attiva
 
-https://hunterwood01.github.io/report-issue-webex/
+### 3. Carica il pannello
+- Apri **UI Extensions Editor**
+- Importa `ReportIssue_Panel.xml`
+- Esporta sul device
+
+### 4. Configura webhook
+Modifica `WEBHOOK_URL` in `ReportIssue_WebDialog.js` con il tuo webhook Webex.
+
+## Note tecniche
+
+- La pagina usa **jsxapi** (libreria ufficiale Cisco) per connettersi all'xAPI locale tramite WebSocket
+- La tastiera nativa viene aperta tramite `xapi.Command.UserInterface.Message.TextInput.Display`
+- La WebView viene chiusa tramite `xapi.Command.UserInterface.WebView.Clear` direttamente dalla pagina
+- Il motore JS della macro e' **QuickJS** - non supporta `URLSearchParams`, arrow functions nei listener, ne' newline nei parametri xAPI

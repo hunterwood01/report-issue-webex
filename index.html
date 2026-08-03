@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Segnala Problema</title>
+  <!-- jsxapi: libreria ufficiale Cisco per accesso xAPI dalla WebView -->
+  <script src="https://unpkg.com/jsxapi@5.4.1/dist/jsxapi.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -23,9 +25,10 @@
       overflow: hidden;
       position: relative;
       display: flex;
+      min-height: 420px;
     }
     .left {
-      width: 220px;
+      width: 200px;
       flex-shrink: 0;
       display: flex;
       align-items: center;
@@ -34,85 +37,116 @@
       border-right: 1px solid #ebebeb;
       background: white;
     }
-    .left img { max-width: 140px; max-height: 100px; object-fit: contain; mix-blend-mode: multiply; }
+    .left img { max-width: 130px; max-height: 90px; object-fit: contain; mix-blend-mode: multiply; }
     .right {
       flex: 1;
-      padding: 48px 36px;
+      padding: 40px 32px;
       display: flex;
       flex-direction: column;
       justify-content: center;
     }
-    .step { display: none; }
-    .step.active { display: flex; flex-direction: column; }
+    .step { display: none; flex-direction: column; }
+    .step.active { display: flex; }
 
-    /* --- Stato invio in corso --- */
-    .spinner-wrap { align-items: center; gap: 20px; }
+    /* Connessione in corso */
+    .connecting { align-items: center; gap: 16px; }
     .spinner {
-      width: 52px; height: 52px;
-      border: 5px solid #e0e0e0;
+      width: 44px; height: 44px;
+      border: 4px solid #e0e0e0;
       border-top-color: #049FD9;
       border-radius: 50%;
       animation: spin .8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .sending-title { font-size: 20px; font-weight: 700; color: #1a1a1a; }
-    .sending-sub { font-size: 14px; color: #888; margin-top: 6px; }
+    .conn-title { font-size: 18px; font-weight: 700; color: #1a1a1a; }
+    .conn-sub { font-size: 13px; color: #888; margin-top: 4px; }
 
-    /* --- Riepilogo --- */
-    .recap-title { font-size: 22px; font-weight: 700; color: #1a1a1a; margin-bottom: 20px; }
-    .recap-row {
-      display: flex;
-      gap: 12px;
-      padding: 10px 0;
-      border-bottom: 1px solid #f0f0f0;
+    /* Form step */
+    h2 { font-size: 20px; font-weight: 700; color: #1a1a1a; margin-bottom: 20px; }
+
+    .field-row { margin-bottom: 16px; }
+    label { display: block; font-size: 12px; font-weight: 600; color: #888; margin-bottom: 5px; text-transform: uppercase; letter-spacing: .04em; }
+
+    /* Bottone-campo: tocca per aprire tastiera nativa */
+    .field-btn {
+      width: 100%;
+      padding: 13px 16px;
+      border: 1.5px solid #d8d8d8;
+      border-radius: 10px;
+      background: white;
       font-size: 15px;
+      color: #1a1a1a;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color .2s;
+      min-height: 48px;
     }
-    .recap-label { color: #888; width: 110px; flex-shrink: 0; font-size: 13px; }
-    .recap-value { color: #1a1a1a; font-weight: 600; }
+    .field-btn.empty { color: #aaa; }
+    .field-btn:hover, .field-btn.filled { border-color: #049FD9; }
+    .keyboard-hint { font-size: 11px; color: #ccc; margin-top: 3px; }
+
+    /* Bottoni categoria */
+    .cat-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      border: 1.5px solid #d8d8d8;
+      border-radius: 50px;
+      background: white;
+      font-size: 14px;
+      color: #1a1a1a;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+    }
+    .cat-btn:hover { border-color: #049FD9; background: #f0faff; }
+
+    .badge {
+      display: inline-block;
+      background: #e8f6fd;
+      color: #049FD9;
+      border-radius: 50px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
     .btn-submit {
-      margin-top: 24px;
       width: 100%;
       padding: 14px;
       background: #049FD9;
       color: white;
       border: none;
       border-radius: 10px;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
       cursor: pointer;
+      margin-top: 8px;
     }
     .btn-submit:hover { background: #0381b0; }
+    .btn-submit:disabled { background: #a0d4ec; cursor: not-allowed; }
 
-    /* --- Successo --- */
+    .btn-back {
+      background: none; border: none; color: #aaa;
+      font-size: 12px; cursor: pointer; margin-top: 10px;
+      text-decoration: underline; text-align: left;
+    }
+
+    /* Successo */
     .success-wrap { align-items: center; text-align: center; }
-    .success-icon { font-size: 56px; margin-bottom: 16px; }
-    .success-title { font-size: 22px; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; }
-    .success-sub { color: #666; font-size: 15px; margin-bottom: 20px; }
-    .countdown-text { font-size: 13px; color: #aaa; }
-    .countdown-bar-wrap { width: 100%; height: 4px; background: #eee; border-radius: 2px; margin-top: 16px; }
-    .countdown-bar { height: 4px; background: #049FD9; border-radius: 2px; width: 100%; transition: width 1s linear; }
+    .success-icon { font-size: 52px; margin-bottom: 14px; }
+    .success-title { font-size: 20px; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; }
+    .success-sub { color: #666; font-size: 14px; margin-bottom: 16px; }
+    .countdown-text { font-size: 12px; color: #aaa; }
+    .bar-wrap { width: 100%; height: 3px; background: #eee; border-radius: 2px; margin-top: 12px; }
+    .bar { height: 3px; background: #049FD9; border-radius: 2px; width: 100%; }
 
-    /* --- Errore --- */
-    .error-box {
-      background: #fff0f0;
-      border: 1px solid #ffcccc;
-      color: #cc0000;
-      border-radius: 8px;
-      padding: 14px 16px;
-      font-size: 14px;
-      margin-top: 16px;
-    }
-    .btn-retry {
-      margin-top: 12px;
-      padding: 10px 24px;
-      background: #049FD9;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-    }
+    /* Errore */
+    .err-box { background: #fff0f0; border: 1px solid #ffcccc; color: #cc0000; border-radius: 8px; padding: 12px 14px; font-size: 13px; }
+    .btn-retry { margin-top: 10px; padding: 9px 20px; background: #049FD9; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -122,104 +156,215 @@
   </div>
   <div class="right">
 
-    <!-- Step: invio in corso -->
-    <div id="step-sending" class="step spinner-wrap">
+    <!-- Connessione xAPI -->
+    <div id="s-connecting" class="step active connecting">
       <div class="spinner"></div>
       <div>
-        <div class="sending-title">Invio in corso…</div>
-        <div class="sending-sub">Stiamo inviando la tua segnalazione</div>
+        <div class="conn-title">Connessione in corso...</div>
+        <div class="conn-sub">Inizializzazione xAPI</div>
       </div>
     </div>
 
-    <!-- Step: successo -->
-    <div id="step-success" class="step success-wrap">
-      <div class="success-icon">✅</div>
+    <!-- Step 1: Nome -->
+    <div id="s-name" class="step">
+      <h2>Chi sei?</h2>
+      <div class="field-row">
+        <label>Nome e Cognome</label>
+        <button class="field-btn empty" id="btn-name" onclick="openKeyboard('name')">Tocca per inserire il nome...</button>
+        <div class="keyboard-hint">Tocca il campo per aprire la tastiera</div>
+      </div>
+      <button class="btn-submit" id="btn-name-next" onclick="goToCategory()">Continua</button>
+    </div>
+
+    <!-- Step 2: Categoria -->
+    <div id="s-category" class="step">
+      <h2>Cosa non va?</h2>
+      <button class="cat-btn" onclick="selectCategory('Audio / Video')">Audio / Video</button>
+      <button class="cat-btn" onclick="selectCategory('Qualcosa nella sala')">Qualcosa nella sala</button>
+      <button class="cat-btn" onclick="selectCategory('Rete / Connettivita')">Rete / Connettivita</button>
+      <button class="cat-btn" onclick="selectCategory('Altro')">Altro</button>
+    </div>
+
+    <!-- Step 3: Dettagli -->
+    <div id="s-details" class="step">
+      <div class="badge" id="badge-cat"></div>
+      <h2>Dettagli aggiuntivi</h2>
+      <div class="field-row">
+        <label>Descrizione (opzionale)</label>
+        <button class="field-btn empty" id="btn-details" onclick="openKeyboard('details')">Tocca per aggiungere dettagli...</button>
+        <div class="keyboard-hint">Tocca il campo per aprire la tastiera</div>
+      </div>
+      <button class="btn-submit" onclick="sendReport()">Invia Segnalazione</button>
+      <button class="btn-back" onclick="show('s-category')">Torna indietro</button>
+    </div>
+
+    <!-- Invio -->
+    <div id="s-sending" class="step connecting">
+      <div class="spinner"></div>
+      <div>
+        <div class="conn-title">Invio in corso...</div>
+        <div class="conn-sub">Stiamo inviando la segnalazione</div>
+      </div>
+    </div>
+
+    <!-- Successo -->
+    <div id="s-success" class="step success-wrap">
+      <div class="success-icon">&#x2705;</div>
       <div class="success-title">Segnalazione inviata!</div>
-      <div class="success-sub">Grazie <strong id="thank-name"></strong>, provvederemo al più presto.</div>
-      <div class="countdown-text">La finestra si chiude tra <strong id="countdown">5</strong> secondi…</div>
-      <div class="countdown-bar-wrap"><div class="countdown-bar" id="countdown-bar"></div></div>
+      <div class="success-sub">Grazie <strong id="thank-name"></strong>, provvederemo al piu presto.</div>
+      <div class="countdown-text">Chiusura automatica tra <strong id="cd">6</strong> secondi</div>
+      <div class="bar-wrap"><div class="bar" id="bar"></div></div>
     </div>
 
-    <!-- Step: errore -->
-    <div id="step-error" class="step">
-      <div class="error-box">
-        ⚠️ Errore durante l'invio. Controlla la connessione e riprova.<br>
-        <small id="error-detail"></small>
-      </div>
-      <button class="btn-retry" onclick="sendWebhook()">Riprova</button>
+    <!-- Errore -->
+    <div id="s-error" class="step">
+      <div class="err-box">Errore durante l'invio. Controlla la connessione.<br><small id="err-detail"></small></div>
+      <button class="btn-retry" onclick="sendReport()">Riprova</button>
     </div>
 
   </div>
 </div>
 
 <script>
-  const params = new URLSearchParams(location.search);
-  const DATA = {
-    name:       params.get('name')     || 'Anonimo',
-    room:       params.get('room')     || 'Sala sconosciuta',
-    category:   params.get('category') || 'Non specificata',
-    details:    params.get('details')  || '',
-    webhook:    params.get('webhook')  || '',
-    autosubmit: params.get('autosubmit') === '1',
-  };
+  var params = new URLSearchParams(location.search);
+  var ROOM    = params.get('room')    || 'Sala sconosciuta';
+  var WEBHOOK = params.get('webhook') || '';
 
-  document.getElementById('thank-name').textContent = DATA.name;
+  var state = { name: '', category: '', details: '' };
+  var xapi = null;
+  var activeField = null;
 
   function show(id) {
-    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.step').forEach(function(s) { s.classList.remove('active'); });
     document.getElementById(id).classList.add('active');
   }
 
-  async function sendWebhook() {
-    show('step-sending');
-    const now = new Date().toLocaleString('it-IT', { timeZone: 'Europe/Rome' });
-    const markdown =
-      `## 🚨 Nuova Segnalazione Problemi\n\n---\n` +
-      `| Campo | Valore |\n|-------|--------|\n` +
-      `| 👤 **Segnalato da** | ${DATA.name} |\n` +
-      `| 🏠 **Sala** | ${DATA.room} |\n` +
-      `| ⚠️ **Categoria** | ${DATA.category} |\n` +
-      `| 💬 **Dettagli** | ${DATA.details || '_Nessun dettaglio_'} |\n` +
-      `| 🕐 **Data/Ora** | ${now} |`;
-
+  // Connessione jsxapi locale al device
+  function connectXapi() {
     try {
-      const res = await fetch(DATA.webhook, {
+      // jsxapi nativo disponibile nella WebView RoomOS
+      xapi = window.jsxapi.connect('ws://localhost', { clientId: 'report-issue', clientSecret: '' });
+      xapi.on('ready', function() {
+        console.log('xAPI pronto');
+        show('s-name');
+      });
+      xapi.on('error', function(err) {
+        console.warn('xAPI error: ' + err);
+        // Fallback: mostra form senza tastiera nativa
+        show('s-name');
+      });
+    } catch(e) {
+      console.warn('jsxapi non disponibile: ' + e);
+      show('s-name');
+    }
+  }
+
+  // Apre tastiera nativa RoomOS tramite xAPI
+  function openKeyboard(field) {
+    activeField = field;
+    var titles = { name: 'Nome e Cognome', details: 'Dettagli aggiuntivi' };
+    var placeholders = { name: 'Es. Mario Rossi', details: 'Es. il microfono non funziona' };
+    if (xapi) {
+      xapi.Command.UserInterface.Message.TextInput.Display({
+        FeedbackId: 'ri_page_input',
+        Title: titles[field],
+        Text: 'Inserisci il testo e premi Conferma',
+        Placeholder: placeholders[field],
+        InputType: 'SingleLine',
+        KeyboardState: 'Open',
+        SubmitText: 'Conferma',
+        Duration: 0,
+      }).catch(function(e) { console.warn('TextInput error: ' + e); });
+    }
+  }
+
+  // Ascolta risposta tastiera
+  function listenKeyboard() {
+    if (!xapi) return;
+    xapi.Event.UserInterface.Message.TextInput.Response.on(function(event) {
+      if (event.FeedbackId !== 'ri_page_input') return;
+      var val = event.Text ? event.Text.trim() : '';
+      if (activeField === 'name') {
+        state.name = val || 'Anonimo';
+        var btn = document.getElementById('btn-name');
+        btn.textContent = state.name;
+        btn.classList.remove('empty');
+        btn.classList.add('filled');
+      } else if (activeField === 'details') {
+        state.details = val;
+        var btn2 = document.getElementById('btn-details');
+        btn2.textContent = val || 'Nessun dettaglio aggiunto';
+        btn2.classList.remove('empty');
+        btn2.classList.add('filled');
+      }
+      activeField = null;
+    });
+  }
+
+  function goToCategory() {
+    if (!state.name) { openKeyboard('name'); return; }
+    show('s-category');
+  }
+
+  function selectCategory(cat) {
+    state.category = cat;
+    document.getElementById('badge-cat').textContent = cat;
+    show('s-details');
+  }
+
+  async function sendReport() {
+    show('s-sending');
+    var now = new Date().toLocaleString('it-IT', { timeZone: 'Europe/Rome' });
+    var markdown =
+      '## Nuova Segnalazione Problemi\n\n---\n' +
+      '| Campo | Valore |\n|-------|--------|\n' +
+      '| **Segnalato da** | ' + state.name + ' |\n' +
+      '| **Sala** | ' + ROOM + ' |\n' +
+      '| **Categoria** | ' + state.category + ' |\n' +
+      '| **Dettagli** | ' + (state.details || 'Nessun dettaglio') + ' |\n' +
+      '| **Data/Ora** | ' + now + ' |';
+    try {
+      var res = await fetch(WEBHOOK, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ markdown }),
+        body: JSON.stringify({ markdown: markdown }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      document.getElementById('thank-name').textContent = state.name;
+      show('s-success');
       startCountdown();
     } catch(e) {
-      document.getElementById('error-detail').textContent = e.message;
-      show('step-error');
+      document.getElementById('err-detail').textContent = e.message;
+      show('s-error');
     }
   }
 
   function startCountdown() {
-    show('step-success');
-    let sec = 5;
-    const cd = document.getElementById('countdown');
-    const bar = document.getElementById('countdown-bar');
-    // Avvia animazione barra
-    requestAnimationFrame(() => {
-      bar.style.transition = `width ${sec}s linear`;
+    var sec = 6;
+    var cd = document.getElementById('cd');
+    var bar = document.getElementById('bar');
+    requestAnimationFrame(function() {
+      bar.style.transition = 'width 6s linear';
       bar.style.width = '0%';
     });
-    const iv = setInterval(() => {
+    var iv = setInterval(function() {
       sec--;
       cd.textContent = sec;
-      if (sec <= 0) { clearInterval(iv); }
+      if (sec <= 0) {
+        clearInterval(iv);
+        // Chiude WebView tramite xAPI se disponibile
+        if (xapi) {
+          xapi.Command.UserInterface.WebView.Clear({ Target: 'OSD' }).catch(function(){});
+          xapi.Command.UserInterface.WebView.Clear({ Target: 'Controller' }).catch(function(){});
+        }
+      }
     }, 1000);
   }
 
-  // Auto-submit appena la pagina è caricata
-  if (DATA.autosubmit && DATA.webhook) {
-    sendWebhook();
-  } else {
-    show('step-error');
-    document.getElementById('error-detail').textContent = 'Parametri mancanti.';
-  }
+  // Avvia
+  connectXapi();
+  // Avvia listener dopo breve delay (aspetta xapi ready)
+  setTimeout(listenKeyboard, 1500);
 </script>
 </body>
 </html>

@@ -1,13 +1,18 @@
 /**
  * ============================================================
  *  Report Issue -> Webex Webhook
- *  Flusso: Panel click -> TextInput nome -> Prompt categoria
- *          -> TextInput dettagli -> WebView su TV + Touch
- *          -> chiusura automatica dopo CLOSE_DELAY_MS
+ *
+ *  Approccio: WebView aperta subito sul Touch (Controller) e TV (OSD)
+ *  La pagina web usa jsxapi nativo (WebSocket locale) per aprire
+ *  la tastiera nativa RoomOS direttamente dalla pagina.
+ *
+ *  Prerequisiti sul device (una tantum):
+ *    xConfiguration Security Xapi WebSocket ApiKey Allowed: True
+ *    xConfiguration WebEngine Features Xapi Peripherals AllowedHosts Hosts: hunterwood01.github.io
  *
  *  Pulsanti Home Screen:
- *    report_issue       -> avvia il flusso
- *    report_issue_close -> chiude la WebView e torna alla home
+ *    report_issue       -> apre WebView
+ *    report_issue_close -> chiude WebView e resetta
  * ============================================================ */
 
 import xapi from 'xapi';
@@ -15,13 +20,6 @@ import xapi from 'xapi';
 const CONFIG = {
   PAGE_URL: 'https://hunterwood01.github.io/report-issue-webex/',
   WEBHOOK_URL: 'https://webexapis.com/v1/webhooks/incoming/Y2lzY29zcGFyazovL3VzL1dFQkhPT0svZGZiMmUxY2QtOGY4Ny00MmU0LWFlMDUtM2VkOWIzZTAyOGZk',
-  CLOSE_DELAY_MS: 6000,
-};
-
-var session = {
-  step: null,
-  name: '',
-  category: '',
 };
 
 var closeTimer = null;
@@ -39,139 +37,42 @@ function buildQueryString(obj) {
     .join('&');
 }
 
-// Chiude WebView su OSD e Controller e resetta la sessione
+// Chiude WebView su OSD e Controller
 function closeAndReset() {
-  // Cancella il timer automatico se attivo
   if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
-  // Chiudi WebView su entrambi i target
   try { xapi.Command.UserInterface.WebView.Clear({ Target: 'OSD' }); } catch(e) {}
   try { xapi.Command.UserInterface.WebView.Clear({ Target: 'Controller' }); } catch(e) {}
-  // Chiudi eventuali dialog nativi aperti
-  try { xapi.Command.UserInterface.Message.TextInput.Clear({ FeedbackId: 'ri_input' }); } catch(e) {}
-  try { xapi.Command.UserInterface.Message.Prompt.Clear({ FeedbackId: 'ri_category' }); } catch(e) {}
-  // Reset sessione
-  session = { step: null, name: '', category: '' };
-  console.log('[Report Issue] Sessione chiusa - tornato alla home');
+  console.log('[Report Issue] WebView chiusa');
 }
 
-// Step 1 - nome
-function askName() {
-  session = { step: 'name', name: '', category: '' };
-  if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
-  xapi.Command.UserInterface.Message.TextInput.Display({
-    FeedbackId: 'ri_input',
-    Title: 'Segnala un problema',
-    Text: 'Inserisci il tuo nome e cognome',
-    Placeholder: 'Es. Mario Rossi',
-    InputType: 'SingleLine',
-    KeyboardState: 'Open',
-    SubmitText: 'Continua',
-    Duration: 0,
-  });
-}
-
-// Step 2 - categoria
-function askCategory() {
-  session.step = 'category';
-  xapi.Command.UserInterface.Message.Prompt.Display({
-    FeedbackId: 'ri_category',
-    Title: 'Cosa non va?',
-    Text: 'Seleziona la categoria del problema',
-    'Option.1': 'Audio / Video',
-    'Option.2': 'Qualcosa nella sala',
-    'Option.3': 'Rete / Connettivita',
-    'Option.4': 'Altro',
-  });
-}
-
-// Step 3 - dettagli
-function askDetails() {
-  session.step = 'details';
-  xapi.Command.UserInterface.Message.TextInput.Display({
-    FeedbackId: 'ri_input',
-    Title: 'Dettagli aggiuntivi (opzionale)',
-    Text: 'Aggiungi ulteriori informazioni sul problema',
-    Placeholder: 'Es. Il microfono non funziona durante le chiamate',
-    InputType: 'SingleLine',
-    KeyboardState: 'Open',
-    SubmitText: 'Invia segnalazione',
-    Duration: 0,
-  });
-}
-
-// Apre WebView su TV e Touch, poi chiude automaticamente
-async function openConfirmWebView(details) {
+// Apre WebView su TV e Touch passando room name e webhook nell'URL
+async function openWebView() {
   var room = await getRoomName();
   var qs = buildQueryString({
-    name: session.name,
     room: room,
-    category: session.category,
-    details: details || '',
     webhook: CONFIG.WEBHOOK_URL,
-    autosubmit: '1',
   });
   var url = CONFIG.PAGE_URL + '?' + qs;
 
   xapi.Command.UserInterface.WebView.Display({ Url: url, Target: 'OSD' });
   xapi.Command.UserInterface.WebView.Display({ Url: url, Target: 'Controller' });
-
-  console.log('[Report Issue] WebView aperta, chiusura automatica tra ' + (CONFIG.CLOSE_DELAY_MS / 1000) + 's');
-
-  closeTimer = setTimeout(function() {
-    closeAndReset();
-  }, CONFIG.CLOSE_DELAY_MS);
+  console.log('[Report Issue] WebView aperta su OSD + Controller');
 }
 
 // --- Listener pannello ---
 xapi.Event.UserInterface.Extensions.Panel.Clicked.on(function(event) {
-  // Avvia flusso
   if (event.PanelId === 'report_issue') {
-    askName();
+    openWebView();
     return;
   }
-  // Chiude e torna alla home
   if (event.PanelId === 'report_issue_close') {
     closeAndReset();
     return;
   }
 });
 
-// --- Listener TextInput ---
-xapi.Event.UserInterface.Message.TextInput.Response.on(function(event) {
-  if (event.FeedbackId !== 'ri_input') return;
-  if (session.step === 'name') {
-    session.name = event.Text.trim() || 'Anonimo';
-    askCategory();
-  } else if (session.step === 'details') {
-    openConfirmWebView(event.Text.trim());
-  }
-});
+// --- Listener chiusura da WebView (via xapi.Command.UserInterface.WebView.Clear dalla pagina) ---
+// La pagina usa jsxapi nativo, non ha bisogno della macro per aprire la tastiera.
+// La macro rimane in ascolto solo per i pulsanti fisici del pannello.
 
-xapi.Event.UserInterface.Message.TextInput.Clear.on(function(event) {
-  if (event.FeedbackId !== 'ri_input') return;
-  if (session.step === 'name') {
-    session.step = null;
-  } else if (session.step === 'details') {
-    openConfirmWebView('');
-  }
-});
-
-// --- Listener Prompt categoria ---
-xapi.Event.UserInterface.Message.Prompt.Response.on(function(event) {
-  if (event.FeedbackId !== 'ri_category') return;
-  var cats = {
-    '1': 'Audio / Video',
-    '2': 'Qualcosa nella sala',
-    '3': 'Rete / Connettivita',
-    '4': 'Altro',
-  };
-  session.category = cats[event.OptionId] || 'Altro';
-  askDetails();
-});
-
-xapi.Event.UserInterface.Message.Prompt.Cleared.on(function(event) {
-  if (event.FeedbackId !== 'ri_category') return;
-  session.step = null;
-});
-
-console.log('[Report Issue] Macro avviata - pulsante Chiudi Pagina attivo');
+console.log('[Report Issue] Macro avviata - WebView con jsxapi nativo');
