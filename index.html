@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Segnala Problema</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'CiscoSansTT', 'Helvetica Neue', Arial, sans-serif;
+      background: #f4f4f4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+      width: 90%;
+      max-width: 700px;
+      display: flex;
+      overflow: hidden;
+      min-height: 480px;
+    }
+
+    .left {
+      background: #f9f9f9;
+      width: 240px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      border-right: 1px solid #ebebeb;
+    }
+
+    .right {
+      flex: 1;
+      padding: 48px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    h2 { font-size: 24px; font-weight: 700; color: #1a1a1a; margin-bottom: 28px; }
+
+    .btn-category {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      padding: 14px 20px;
+      margin-bottom: 12px;
+      border: 1.5px solid #d8d8d8;
+      border-radius: 50px;
+      background: white;
+      font-size: 16px;
+      color: #1a1a1a;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+    }
+
+    .btn-category:hover { border-color: #049FD9; background: #f0faff; }
+
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
+
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid #d8d8d8;
+      border-radius: 10px;
+      font-size: 15px;
+      color: #1a1a1a;
+      outline: none;
+      transition: border-color .2s;
+      font-family: inherit;
+      resize: none;
+    }
+
+    input[type="text"]:focus, textarea:focus { border-color: #049FD9; }
+
+    .category-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #e8f6fd;
+      color: #049FD9;
+      border-radius: 50px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 14px;
+      background: #049FD9;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .2s;
+      margin-top: 4px;
+    }
+
+    .btn-submit:hover { background: #0381b0; }
+    .btn-submit:disabled { background: #a0d4ec; cursor: not-allowed; }
+
+    .btn-back {
+      background: none;
+      border: none;
+      color: #888;
+      font-size: 13px;
+      cursor: pointer;
+      margin-top: 12px;
+      text-decoration: underline;
+      padding: 0;
+    }
+
+    .success-icon { font-size: 56px; margin-bottom: 16px; }
+    .success-title { font-size: 22px; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; }
+    .success-sub { color: #666; font-size: 15px; }
+
+    .error-msg {
+      background: #fff0f0;
+      border: 1px solid #ffcccc;
+      color: #cc0000;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 14px;
+      margin-top: 12px;
+      display: none;
+    }
+
+    .spinner {
+      width: 22px; height: 22px;
+      border: 3px solid rgba(255,255,255,0.4);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="left">
+    <svg viewBox="0 0 200 80" fill="none" xmlns="http://www.w3.org/2000/svg" width="160">
+      <g fill="#049FD9">
+        <rect x="0" y="30" width="16" height="20" rx="3"/>
+        <rect x="22" y="18" width="16" height="44" rx="3"/>
+        <rect x="44" y="8" width="16" height="64" rx="3"/>
+        <rect x="66" y="18" width="16" height="44" rx="3"/>
+        <rect x="88" y="30" width="16" height="20" rx="3"/>
+        <rect x="110" y="18" width="16" height="44" rx="3"/>
+        <rect x="132" y="8" width="16" height="64" rx="3"/>
+        <rect x="154" y="18" width="16" height="44" rx="3"/>
+        <rect x="176" y="30" width="16" height="20" rx="3"/>
+      </g>
+      <text x="0" y="76" font-family="Arial" font-weight="700" font-size="26" fill="#1a1a1a" letter-spacing="8">CISCO</text>
+    </svg>
+  </div>
+
+  <div class="right">
+    <div id="step-name">
+      <h2>Chi sei?</h2>
+      <div class="form-group">
+        <label for="input-name">Nome e Cognome</label>
+        <input type="text" id="input-name" placeholder="Es. Mario Rossi" autocomplete="off">
+      </div>
+      <button class="btn-submit" id="btn-name-next">Continua →</button>
+    </div>
+
+    <div id="step-category" class="hidden">
+      <h2>Cosa non va?</h2>
+      <button class="btn-category" data-cat="Audio / Video">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#049FD9" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        Audio / Video
+      </button>
+      <button class="btn-category" data-cat="Qualcosa nella sala">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#049FD9" stroke-width="2"><path d="M9 21h6M12 3a6 6 0 0 1 6 6c0 2.5-1.5 4.5-3 6H9c-1.5-1.5-3-3.5-3-6a6 6 0 0 1 6-6z"/></svg>
+        Qualcosa nella sala
+      </button>
+      <button class="btn-category" data-cat="Rete / Connettività">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#049FD9" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10A15.3 15.3 0 0 1 12 2z"/></svg>
+        Rete / Connettività
+      </button>
+      <button class="btn-category" data-cat="Altro">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#049FD9" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Altro
+      </button>
+    </div>
+
+    <div id="step-details" class="hidden">
+      <div id="cat-badge" class="category-badge"></div>
+      <h2>Descrivi il problema</h2>
+      <div class="form-group">
+        <label for="input-details">Dettagli aggiuntivi (opzionale)</label>
+        <textarea id="input-details" rows="4" placeholder="Es. Il microfono non funziona durante le chiamate..."></textarea>
+      </div>
+      <button class="btn-submit" id="btn-submit">Invia Segnalazione</button>
+      <div id="error-msg" class="error-msg">Errore nell'invio. Riprova o contatta il supporto.</div>
+      <button class="btn-back" id="btn-back">← Torna indietro</button>
+    </div>
+
+    <div id="step-success" class="hidden">
+      <div class="success-icon">✅</div>
+      <div class="success-title">Segnalazione inviata!</div>
+      <div class="success-sub">Grazie <strong id="thank-name"></strong>, provvederemo al più presto.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const WEBHOOK_URL = 'https://webexapis.com/v1/webhooks/incoming/Y2lzY29zcGFyazovL3VzL1dFQkhPT0svZGZiMmUxY2QtOGY4Ny00MmU0LWFlMDUtM2VkOWIzZTAyOGZk';
+  const params = new URLSearchParams(location.search);
+  const roomName = params.get('roomname') || 'Sala sconosciuta';
+
+  let reporterName = '';
+  let selectedCat = '';
+
+  function show(id) {
+    ['step-name','step-category','step-details','step-success'].forEach(s => {
+      document.getElementById(s).classList.add('hidden');
+    });
+    document.getElementById(id).classList.remove('hidden');
+  }
+
+  document.getElementById('btn-name-next').addEventListener('click', () => {
+    const val = document.getElementById('input-name').value.trim();
+    if (!val) { document.getElementById('input-name').focus(); return; }
+    reporterName = val;
+    show('step-category');
+  });
+  document.getElementById('input-name').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('btn-name-next').click();
+  });
+
+  document.querySelectorAll('.btn-category').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedCat = btn.dataset.cat;
+      document.getElementById('cat-badge').innerHTML = selectedCat;
+      show('step-details');
+    });
+  });
+
+  document.getElementById('btn-back').addEventListener('click', () => show('step-category'));
+
+  document.getElementById('btn-submit').addEventListener('click', async () => {
+    const details = document.getElementById('input-details').value.trim();
+    const btn = document.getElementById('btn-submit');
+    const errEl = document.getElementById('error-msg');
+    errEl.style.display = 'none';
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Invio in corso...';
+
+    const now = new Date().toLocaleString('it-IT', { timeZone: 'Europe/Rome' });
+    const markdown =
+      `## \uD83D\uDEA8 Nuova Segnalazione Problemi\n\n---\n` +
+      `| Campo | Valore |\n|-------|--------|\n` +
+      `| \uD83D\uDC64 **Segnalato da** | ${reporterName} |\n` +
+      `| \uD83C\uDFE0 **Sala** | ${roomName} |\n` +
+      `| \u26A0\uFE0F **Categoria** | ${selectedCat} |\n` +
+      `| \uD83D\uDCAC **Dettagli** | ${details || '_Nessun dettaglio_'} |\n` +
+      `| \uD83D\uDD50 **Data/Ora** | ${now} |`;
+
+    try {
+      await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ markdown }),
+      });
+      document.getElementById('thank-name').textContent = reporterName;
+      show('step-success');
+    } catch(e) {
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.innerHTML = 'Invia Segnalazione';
+    }
+  });
+</script>
+</body>
+</html>

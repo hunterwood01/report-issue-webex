@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<Extensions>
+  <Version>1.11</Version>
+  <Panel>
+    <PanelId>report_issue</PanelId>
+    <Origin>local</Origin>
+    <Location>HomeScreenButton</Location>
+    <Icon>Helpdesk</Icon>
+    <Color>#CF7900</Color>
+    <Name>Segnala Problema</Name>
+    <ActivityType>Custom</ActivityType>
+  </Panel>
+</Extensions>
