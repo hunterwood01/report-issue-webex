@@ -28,7 +28,7 @@
     }
 
     .left {
-      background: #f9f9f9;
+      background: white;
       width: 240px;
       flex-shrink: 0;
       display: flex;
@@ -42,6 +42,7 @@
       max-width: 160px;
       max-height: 120px;
       object-fit: contain;
+      mix-blend-mode: multiply;
     }
 
     .right {
@@ -75,20 +76,52 @@
     .form-group { margin-bottom: 20px; }
     label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
 
-    input[type="text"], textarea {
+    /* Campo input visivo — non editabile direttamente su RoomOS */
+    .input-fake {
       width: 100%;
       padding: 12px 16px;
       border: 1.5px solid #d8d8d8;
       border-radius: 10px;
       font-size: 15px;
       color: #1a1a1a;
-      outline: none;
+      background: white;
+      cursor: pointer;
+      min-height: 48px;
+      display: flex;
+      align-items: center;
       transition: border-color .2s;
-      font-family: inherit;
-      resize: none;
+      user-select: none;
     }
+    .input-fake:hover { border-color: #049FD9; }
+    .input-fake.active { border-color: #049FD9; }
+    .input-fake.placeholder { color: #aaa; }
 
-    input[type="text"]:focus, textarea:focus { border-color: #049FD9; }
+    .input-fake-multiline {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid #d8d8d8;
+      border-radius: 10px;
+      font-size: 15px;
+      color: #1a1a1a;
+      background: white;
+      cursor: pointer;
+      min-height: 96px;
+      display: flex;
+      align-items: flex-start;
+      transition: border-color .2s;
+      user-select: none;
+    }
+    .input-fake-multiline:hover { border-color: #049FD9; }
+    .input-fake-multiline.placeholder { color: #aaa; }
+
+    .keyboard-hint {
+      font-size: 11px;
+      color: #bbb;
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
 
     .category-badge {
       display: inline-flex;
@@ -170,8 +203,9 @@
     <div id="step-name">
       <h2>Chi sei?</h2>
       <div class="form-group">
-        <label for="input-name">Nome e Cognome</label>
-        <input type="text" id="input-name" placeholder="Es. Mario Rossi" autocomplete="off">
+        <label>Nome e Cognome</label>
+        <div class="input-fake placeholder" id="display-name" onclick="openKeyboard('name')">Es. Mario Rossi</div>
+        <div class="keyboard-hint">⌨️ Tocca per aprire la tastiera</div>
       </div>
       <button class="btn-submit" id="btn-name-next">Continua →</button>
     </div>
@@ -200,8 +234,9 @@
       <div id="cat-badge" class="category-badge"></div>
       <h2>Descrivi il problema</h2>
       <div class="form-group">
-        <label for="input-details">Dettagli aggiuntivi (opzionale)</label>
-        <textarea id="input-details" rows="4" placeholder="Es. Il microfono non funziona durante le chiamate..."></textarea>
+        <label>Dettagli aggiuntivi (opzionale)</label>
+        <div class="input-fake-multiline placeholder" id="display-details" onclick="openKeyboardMultiline('details')">Es. Il microfono non funziona durante le chiamate...</div>
+        <div class="keyboard-hint">⌨️ Tocca per aprire la tastiera</div>
       </div>
       <button class="btn-submit" id="btn-submit">Invia Segnalazione</button>
       <div id="error-msg" class="error-msg">Errore nell'invio. Riprova o contatta il supporto.</div>
@@ -223,6 +258,7 @@
 
   let reporterName = '';
   let selectedCat = '';
+  let detailsText = '';
 
   function show(id) {
     ['step-name','step-category','step-details','step-success'].forEach(s => {
@@ -231,14 +267,63 @@
     document.getElementById(id).classList.remove('hidden');
   }
 
-  document.getElementById('btn-name-next').addEventListener('click', () => {
-    const val = document.getElementById('input-name').value.trim();
-    if (!val) { document.getElementById('input-name').focus(); return; }
-    reporterName = val;
-    show('step-category');
+  // Richiede tastiera nativa RoomOS tramite postMessage alla macro
+  function openKeyboard(field) {
+    const titles = { name: 'Nome e Cognome', details: 'Dettagli aggiuntivi' };
+    const placeholders = { name: 'Es. Mario Rossi', details: 'Es. Il microfono non funziona...' };
+    window.postMessage(JSON.stringify({
+      type: 'openKeyboard',
+      field,
+      title: titles[field],
+      placeholder: placeholders[field],
+    }), '*');
+  }
+
+  function openKeyboardMultiline(field) {
+    window.postMessage(JSON.stringify({
+      type: 'openKeyboardMultiline',
+      field,
+      title: 'Dettagli aggiuntivi',
+      placeholder: 'Es. Il microfono non funziona durante le chiamate...',
+    }), '*');
+  }
+
+  // Riceve il testo dalla macro dopo che l'utente ha digitato sulla tastiera RoomOS
+  window.addEventListener('message', event => {
+    let msg;
+    try { msg = JSON.parse(event.data); } catch(e) { return; }
+    if (msg.type !== 'textInput') return;
+
+    if (msg.field === 'name') {
+      reporterName = msg.value;
+      const el = document.getElementById('display-name');
+      if (msg.value) {
+        el.textContent = msg.value;
+        el.classList.remove('placeholder');
+        el.classList.add('active');
+      } else {
+        el.textContent = 'Es. Mario Rossi';
+        el.classList.add('placeholder');
+        el.classList.remove('active');
+      }
+    }
+
+    if (msg.field === 'details') {
+      detailsText = msg.value;
+      const el = document.getElementById('display-details');
+      if (msg.value) {
+        el.textContent = msg.value;
+        el.classList.remove('placeholder');
+      } else {
+        el.textContent = 'Es. Il microfono non funziona durante le chiamate...';
+        el.classList.add('placeholder');
+      }
+    }
   });
-  document.getElementById('input-name').addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.getElementById('btn-name-next').click();
+
+  document.getElementById('btn-name-next').addEventListener('click', () => {
+    if (!reporterName) { openKeyboard('name'); return; }
+    show('step-category');
   });
 
   document.querySelectorAll('.btn-category').forEach(btn => {
@@ -252,7 +337,6 @@
   document.getElementById('btn-back').addEventListener('click', () => show('step-category'));
 
   document.getElementById('btn-submit').addEventListener('click', async () => {
-    const details = document.getElementById('input-details').value.trim();
     const btn = document.getElementById('btn-submit');
     const errEl = document.getElementById('error-msg');
     errEl.style.display = 'none';
@@ -266,7 +350,7 @@
       `| \uD83D\uDC64 **Segnalato da** | ${reporterName} |\n` +
       `| \uD83C\uDFE0 **Sala** | ${roomName} |\n` +
       `| \u26A0\uFE0F **Categoria** | ${selectedCat} |\n` +
-      `| \uD83D\uDCAC **Dettagli** | ${details || '_Nessun dettaglio_'} |\n` +
+      `| \uD83D\uDCAC **Dettagli** | ${detailsText || '_Nessun dettaglio_'} |\n` +
       `| \uD83D\uDD50 **Data/Ora** | ${now} |`;
 
     try {
